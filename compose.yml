@@ -1,0 +1,8 @@
+services:
+  caddyshack:
+    image: ghcr.io/bjblazko/caddyshack:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data:ro  # optional: place dbip-country-lite.csv here for GeoIP support
+    restart: unless-stopped

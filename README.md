@@ -4,6 +4,12 @@
 
 A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access logs. Upload a JSONL log file and get instant visual insights: traffic trends, browser and OS breakdowns, geographic distribution on a world map, top pages, status codes, and more — entirely in your browser, with no data leaving your machine.
 
+## Screenshots
+
+![Summary cards, world map, and country table](doc/screenshot-1.png)
+
+![Browser, OS, and daily traffic charts](doc/screenshot-2.png)
+
 ## Features
 
 - **Drag-and-drop upload** of Caddy JSONL access logs — no configuration needed, just drop the file
@@ -32,6 +38,32 @@ Pre-built binaries for each release are available on the [GitHub Releases](https
 | Windows | amd64 | `caddyshack-vX.Y.Z-windows-amd64.exe` |
 
 Download the binary for your platform, make it executable, and run it — no installation required.
+
+## Container
+
+Images for `linux/amd64` and `linux/arm64` are published to GHCR on every release.
+
+**Run directly:**
+
+```sh
+docker run -p 8080:8080 ghcr.io/bjblazko/caddyshack:latest
+```
+
+**With GeoIP support** (mount a local `data/` directory containing `dbip-country-lite.csv`):
+
+```sh
+docker run -p 8080:8080 -v ./data:/app/data:ro ghcr.io/bjblazko/caddyshack:latest
+```
+
+**With Compose** (uses the included [`compose.yml`](compose.yml)):
+
+```sh
+docker compose up -d
+# or with Podman:
+podman compose up -d
+```
+
+`podman` and `podman compose` are drop-in replacements for all commands above.
 
 ## Quick Start
 

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Docker support: multi-stage `Dockerfile` and `compose.yml` for container-based deployment
+- GHCR publishing: GitHub Actions release workflow now builds and pushes multi-arch images (`linux/amd64`, `linux/arm64`) to `ghcr.io/bjblazko/caddyshack`
+- Screenshots in README showing the dashboard UI
+
 ## [0.1.0] - 2026-03-29
 
 ### Added
