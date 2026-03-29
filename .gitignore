@@ -1,0 +1,28 @@
+# Binary
+caddyshack
+
+# Cross-compiled release binaries
+caddyshack-v*
+*.exe
+
+# GeoIP database (download separately, not redistributable)
+data/dbip-country-lite.csv
+
+# Distribution directory
+dist/
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+
+# Claude Code local settings
+.claude/settings.local.json

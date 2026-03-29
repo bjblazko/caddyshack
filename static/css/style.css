@@ -1,0 +1,352 @@
+:root {
+    --green-dark: #2d5a27;
+    --green-mid: #4a8c3f;
+    --green-light: #8bc34a;
+    --green-pale: #e8f5e9;
+    --bg: #f5f5f5;
+    --card-bg: #ffffff;
+    --text: #333333;
+    --text-light: #666666;
+    --border: #e0e0e0;
+    --radius: 8px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+}
+
+header {
+    background: var(--green-dark);
+    color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo {
+    height: 60px;
+    width: auto;
+}
+
+header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.upload-zone {
+    border: 2px dashed rgba(255,255,255,0.5);
+    border-radius: var(--radius);
+    padding: 1rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    min-width: 300px;
+}
+
+.upload-zone:hover,
+.upload-zone.dragover {
+    border-color: var(--green-light);
+    background: rgba(255,255,255,0.1);
+}
+
+.upload-zone code {
+    background: rgba(255,255,255,0.15);
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+}
+
+.file-label {
+    color: var(--green-light);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+#file-input { display: none; }
+
+.file-selector {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.5rem 0 0;
+}
+
+.file-selector-label {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.file-select {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: var(--radius);
+    padding: 0.3rem 2rem 0.3rem 0.7rem;
+    font-size: 0.85rem;
+    color: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='white' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    max-width: 420px;
+    transition: border-color 0.2s;
+}
+
+.file-select:hover,
+.file-select:focus {
+    border-color: var(--green-light);
+    outline: none;
+}
+
+.file-select option,
+.file-select optgroup {
+    background: var(--green-dark);
+    color: white;
+}
+
+main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.filter-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.filter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-light);
+}
+
+.filter-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.host-select {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.55rem 2rem 0.55rem 0.9rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    transition: border-color 0.2s;
+}
+
+.host-select:hover,
+.host-select:focus {
+    border-color: var(--green-mid);
+    outline: none;
+}
+
+.filter-btn {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.55rem 1.1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    border-color: var(--green-mid);
+    color: var(--green-mid);
+}
+
+.filter-btn.active {
+    background: var(--green-mid);
+    border-color: var(--green-mid);
+    color: white;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    text-align: center;
+    border-top: 3px solid var(--green-mid);
+}
+
+.card-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--green-dark);
+}
+
+.card-label {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.panel {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+}
+
+.panel h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--green-dark);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.panel canvas {
+    width: 100%;
+}
+
+.full-width {
+    margin-bottom: 1.5rem;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.data-table thead th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 2px solid var(--green-mid);
+    color: var(--green-dark);
+    font-weight: 600;
+}
+
+.data-table tbody td {
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr:hover {
+    background: var(--green-pale);
+}
+
+.data-table td:last-child,
+.data-table th:last-child {
+    text-align: right;
+}
+
+.data-table td[title] {
+    cursor: help;
+}
+
+#map-container {
+    width: 100%;
+    position: relative;
+}
+
+#map-container svg {
+    width: 100%;
+    height: auto;
+}
+
+.tooltip {
+    position: fixed;
+    background: var(--green-dark);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+}
+
+.hidden { display: none !important; }
+
+#loading {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border);
+    border-top-color: var(--green-mid);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+    header { flex-direction: column; text-align: center; }
+    .upload-zone { min-width: auto; width: 100%; }
+    .grid-2col { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: repeat(2, 1fr); }
+}
