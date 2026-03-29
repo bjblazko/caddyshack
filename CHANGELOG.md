@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-03-29
+
 ### Added
 
 - Docker support: multi-stage `Dockerfile` and `compose.yml` for container-based deployment
@@ -35,5 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - D3.js and TopoJSON served locally for offline use
 - Single-binary deployment with configurable listen address and GeoIP path
 
-[Unreleased]: https://github.com/bjblazko/caddyshack/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/bjblazko/caddyshack/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/bjblazko/caddyshack/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bjblazko/caddyshack/releases/tag/v0.1.0
