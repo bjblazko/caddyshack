@@ -23,17 +23,15 @@ The optional DB-IP Lite CSV is loaded into memory at server startup. It contains
 
 ## Data Flow Privacy Properties
 
-```
-Upload (raw IPs in log file)
-  ↓
-Parse & analyze (in memory, single request scope)
-  ├─ GeoIP lookup on original IP → country code
-  ├─ Anonymize IP → truncated IP
-  └─ Aggregate into counters
-  ↓
-API Response (anonymized IPs, country codes, aggregate counts)
-  ↓
-Browser renders dashboard (no further data transmitted)
+```mermaid
+flowchart TD
+    A["Upload\nraw IPs in log file"]
+    A --> B["Parse & analyze\nin memory, single request scope"]
+    B --> C["GeoIP lookup on original IP\n→ country code stored"]
+    B --> D["Anonymize IP\n→ truncated IP stored"]
+    B --> E["Aggregate into counters"]
+    C & D & E --> F["API Response\nanonymized IPs · country codes\naggregate counts"]
+    F --> G["Browser renders dashboard\nno further data transmitted"]
 ```
 
 No raw IP addresses leave the server process. The uploaded file content is not written to disk beyond Go's standard multipart temp file handling (which is cleaned up automatically).

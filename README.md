@@ -120,7 +120,7 @@ CaddyShack is designed around three principles:
 
 ## Test Data
 
-A sample log generator is included at `testdata/generate.py`. Run it to produce synthetic Caddy JSONL log files for development and testing. A pre-generated sample (`testdata/sample-huepattl.jsonl`) is included in the repository.
+A sample log generator is included at `testdata/generate.py`. Run it to produce synthetic Caddy JSONL log files for development and testing. A pre-generated sample (`testdata/sample-example.jsonl`) is included in the repository.
 
 ## Project Structure
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate a realistic Caddy JSONL test log file modeled on huepattl.de.
+"""Generate a realistic Caddy JSONL test log file modeled on example.com.
 
-Uses real page URIs, asset paths, User-Agent strings, and IP ranges
+Uses sample page URIs, asset paths, User-Agent strings, and IP ranges
 from various countries to produce a plausible 14-day traffic sample.
 """
 
@@ -12,20 +12,20 @@ from datetime import datetime, timedelta, timezone
 
 random.seed(42)  # reproducible
 
-OUTPUT = "testdata/sample-huepattl.jsonl"
+OUTPUT = "testdata/sample-example.jsonl"
 DAYS = 14
-HOST = "huepattl.de"
+HOST = "example.com"
 # Approximate daily visits for a small personal site
 BASE_DAILY_REQUESTS = 80
 
-# ── Real huepattl.de pages ──────────────────────────────────────────
+# ── Sample pages ────────────────────────────────────────────────────
 
 PAGES = [
     ("/", 30),                                  # homepage, highest weight
     ("/about.html", 10),
     ("/products/", 12),
-    ("/products/unterlumen.html", 15),
-    ("/products/sippschaft.html", 12),
+    ("/products/product-a.html", 15),
+    ("/products/product-b.html", 12),
     ("/blog/", 8),
     ("/blog/2026-03-welcome.html", 6),
 ]
@@ -35,20 +35,20 @@ ASSETS = [
     "/css/style.css",
     "/css/material-symbols-outlined.ttf",
     "/js/site.js",
-    "/img/huepattl-logo-256.png",
-    "/img/huepattl-logo-alpha-256.png",
-    "/img/logo-sippschaft.png",
-    "/img/logo-sippschaft.svg",
-    "/img/logo-unterlumen-96.png",
-    "/img/logo-unterlumen.svg",
+    "/img/logo-256.png",
+    "/img/logo-alpha-256.png",
+    "/img/logo-product-b.png",
+    "/img/logo-product-b.svg",
+    "/img/logo-product-a-96.png",
+    "/img/logo-product-a.svg",
     "/img/screenshot-1-overview.jpg",
     "/img/screenshot-2-fullscreen-and-exif.jpg",
     "/img/screenshot-3-filemanager.jpg",
     "/img/screenshot-4-wastebin.jpg",
     "/img/screenshot-5-addgeolocation.jpg",
-    "/img/sippschaft-bio.jpg",
-    "/img/sippschaft-nodes.jpg",
-    "/img/sippschaft-tree-modern.jpg",
+    "/img/product-b-bio.jpg",
+    "/img/product-b-nodes.jpg",
+    "/img/product-b-tree.jpg",
     "/favicon.ico",
 ]
 
@@ -102,7 +102,7 @@ UA_POOL = [
 
 IP_POOLS = [
     # (country weight, ip_prefix_generator)
-    # Germany — heaviest (it's a .de site)
+    # Germany — heaviest
     ("DE", 35, lambda: f"{random.choice([84,85,87,91,93,95,130,134,141,178,188,217])}.{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}"),
     # United States
     ("US", 15, lambda: f"{random.choice([3,8,12,15,17,18,23,24,32,35,38,40,44,45,47,50,52,54,55,56,57,63,64,65,66,67,68,69,70,71,72,73,74,75,76,96,97,98,99,100,104,108])}.{random.randint(1,254)}.{random.randint(1,254)}.{random.randint(1,254)}"),
