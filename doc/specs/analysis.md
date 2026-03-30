@@ -2,39 +2,67 @@
 
 ## Overview
 
-`internal/analyzer` is the core aggregation engine. `Analyze(r io.Reader)` makes a single streaming pass over log entries and returns a `MultiHostReport`.
+`internal/analyzer` is the core aggregation engine. `Analyze(r io.Reader, params FilterParams)`
+makes a single streaming pass over log entries, applies all filter conditions
+with AND logic, and returns an `AnalysisResult`.
+
+## FilterParams
+
+All filter conditions are evaluated before any entry is aggregated.
+Empty/zero values mean "no filter" for that dimension.
+
+```go
+type FilterParams struct {
+    Host      string // virtual host exact match, "" = all
+    StartDate string // "YYYY-MM-DD" inclusive lower bound, "" = unbounded
+    EndDate   string // "YYYY-MM-DD" inclusive upper bound, "" = unbounded
+    Country   string // country name exact match, "" = all
+    Browser   string // browser name exact match, "" = all
+    OS        string // OS name exact match, "" = all
+    Page      string // exact URI match, "" = all
+    Status    string // "success" | "error", "" = all
+}
+```
 
 ## Processing Per Entry
 
-1. Extract `client_ip`; fall back to `remote_ip` if absent
-2. GeoIP lookup on the original IP → country code + name
-3. Anonymize IP (last IPv4 octet zeroed; IPv6 truncated to first 3 groups)
-4. Parse User-Agent → browser name + OS name
-5. Determine UTC date from `ts` (`YYYY-MM-DD`)
-6. Increment all map-based counters for the entry's host and for the aggregate (`__all__`)
+For each log entry:
+
+1. Extract `client_ip`; fall back to `remote_ip` if absent.
+2. Compute UTC date from `ts` (`YYYY-MM-DD`).
+3. Parse User-Agent → browser name + OS name.
+4. GeoIP lookup on the original IP → country code → country name.
+5. **Host collection pass:** if the entry passes every filter *except* the host
+   filter, add `request.host` to the `hostSeen` set. This ensures the returned
+   `hosts` list reflects all hosts selectable under the current filter context.
+6. **Aggregate pass:** if the entry fails the host filter or any non-host filter,
+   skip it. Otherwise increment all counters.
+
+## Aggregation Counters
+
+| Counter | Key | Notes |
+|---------|-----|-------|
+| `statusCodes` | HTTP status int | |
+| `pages` | URI string | Assets excluded; error-scoped queries count 4xx URIs |
+| `browsers` | Browser name | |
+| `oses` | OS name | |
+| `ips` | Anonymized IP | |
+| `daily` | YYYY-MM-DD | |
+| `countryCounts` | ISO 3166-1 alpha-2 code | |
 
 ## Report Structure
 
 ```mermaid
 graph TD
-    MHR["MultiHostReport\nhosts: string[]\nby_host: map"]
-    MHR --> all["__all__\nFullReport — aggregate"]
-    MHR --> perhost["example.com\nFullReport — per-host"]
-
-    all --> allA["All: Report\nall traffic"]
-    all --> allS["Success: Report\n2xx"]
-    all --> allE["Error: Report\n4xx+"]
-
-    perhost --> phA["All: Report"]
-    perhost --> phS["Success: Report"]
-    perhost --> phE["Error: Report"]
+    AR["AnalysisResult\nFileID?: string\nHosts: string[]\nReport: *Report"]
+    AR --> R["Report\n(all filter dimensions applied)"]
 ```
 
 ### `Report` Fields
 
 | Field | Type | Limit | Description |
 |-------|------|-------|-------------|
-| `total_requests` | int | — | Total entries processed |
+| `total_requests` | int | — | Total entries passing all filters |
 | `unique_ips` | int | — | Distinct anonymized IPs |
 | `total_bytes` | int | — | Sum of `size` fields |
 | `avg_response_ms` | float64 | — | `(sum duration / count) × 1000` |
@@ -77,16 +105,19 @@ type CountryCount struct {
 
 A URI is counted as a page only if **all** of the following hold:
 
-1. HTTP status code < 400 *(inverted for the Error filter: status ≥ 400)*
-2. URI does **not** start with: `/css/`, `/js/`, `/img/`, `/fonts/`, `/api`
-3. URI does **not** end with: `.css`, `.js`, `.png`, `.jpg`, `.svg`, `.ttf`, `.woff`, `.woff2`, `.ico`
+1. Not an asset (see prefixes/extensions below).
+2. For `status = "error"` queries: status ≥ 400. For all others: status < 400.
 
-## Traffic Segmentation
+**Asset prefixes:** `/css/`, `/js/`, `/img/`, `/fonts/`, `/api`
+**Asset extensions:** `.css`, `.js`, `.png`, `.jpg`, `.svg`, `.ttf`, `.woff`, `.woff2`, `.ico`
 
-All three `Report` objects (All, Success, Error) are populated in a single pass. No re-analysis is needed to switch between views on the frontend.
+## Traffic Filtering
 
-| Filter | Included status codes |
-|--------|-----------------------|
-| All | all |
-| Success | 200–299 |
-| Error | 400–599 |
+| `status` param | Included entries |
+|----------------|-----------------|
+| `""` (omitted) | all |
+| `"success"` | 200–299 |
+| `"error"` | 400–599 |
+
+All other filter dimensions (host, date range, country, browser, OS, page) are
+applied in the same pass via `passesNonHostFilters`.

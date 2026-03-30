@@ -3,17 +3,30 @@ package analyzer
 import (
 	"io"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/bjblazko/caddyshack/internal/anonymize"
 	"github.com/bjblazko/caddyshack/internal/geoip"
 	"github.com/bjblazko/caddyshack/internal/logparser"
 	"github.com/bjblazko/caddyshack/internal/useragent"
-	"strings"
 )
 
 var assetPrefixes = []string{"/css/", "/js/", "/img/", "/fonts/", "/api"}
 var assetExtensions = []string{".css", ".js", ".png", ".jpg", ".svg", ".ttf", ".woff", ".woff2", ".ico"}
+
+// FilterParams holds all filter criteria applied before aggregation.
+// All conditions are ANDed. Empty/zero values mean "no filter" for that dimension.
+type FilterParams struct {
+	Host      string // virtual host, "" = all
+	StartDate string // "YYYY-MM-DD", "" = unbounded
+	EndDate   string // "YYYY-MM-DD", "" = unbounded
+	Country   string // country name, "" = all
+	Browser   string // browser name, "" = all
+	OS        string // OS name, "" = all
+	Page      string // exact URI, "" = all
+	Status    string // "success" | "error", "" = all
+}
 
 type NameCount struct {
 	Name  string `json:"name"`
@@ -52,66 +65,18 @@ type Report struct {
 	Countries        []CountryCount `json:"countries"`
 }
 
-type FullReport struct {
-	All     *Report `json:"all"`
-	Success *Report `json:"success"`
-	Error   *Report `json:"error"`
+// AnalysisResult is the top-level response from Analyze.
+type AnalysisResult struct {
+	FileID string   `json:"file_id,omitempty"`
+	Hosts  []string `json:"hosts"`
+	Report *Report  `json:"report"`
 }
 
-type MultiHostReport struct {
-	Hosts  []string                `json:"hosts"`
-	ByHost map[string]*FullReport  `json:"by_host"`
-}
-
-// Analyze reads JSONL log data and produces reports split by virtual host and status filter.
-func Analyze(r io.Reader) *MultiHostReport {
-	var entries []logparser.LogEntry
-	hostSeen := make(map[string]bool)
-	logparser.ParseStream(r, func(entry logparser.LogEntry) {
-		entries = append(entries, entry)
-		host := entry.Request.Host
-		if host != "" {
-			hostSeen[host] = true
-		}
-	})
-
-	hosts := make([]string, 0, len(hostSeen))
-	for h := range hostSeen {
-		hosts = append(hosts, h)
-	}
-	sort.Strings(hosts)
-
-	byHost := make(map[string]*FullReport, len(hosts)+1)
-	byHost["all"] = fullReportFor(entries, nil)
-	for _, host := range hosts {
-		h := host
-		byHost[h] = fullReportFor(entries, func(e logparser.LogEntry) bool { return e.Request.Host == h })
-	}
-
-	return &MultiHostReport{Hosts: hosts, ByHost: byHost}
-}
-
-func fullReportFor(entries []logparser.LogEntry, hostFilter func(logparser.LogEntry) bool) *FullReport {
-	var subset []logparser.LogEntry
-	if hostFilter == nil {
-		subset = entries
-	} else {
-		for _, e := range entries {
-			if hostFilter(e) {
-				subset = append(subset, e)
-			}
-		}
-	}
-	return &FullReport{
-		All:     analyzeFiltered(subset, nil, false),
-		Success: analyzeFiltered(subset, func(e logparser.LogEntry) bool { return e.Status >= 200 && e.Status < 300 }, false),
-		Error:   analyzeFiltered(subset, func(e logparser.LogEntry) bool { return e.Status >= 400 }, true),
-	}
-}
-
-// analyzeFiltered produces a report from log entries, optionally filtered by a predicate.
-// isErrorFilter indicates whether to count URIs with status >= 400 (errors) or < 400 (success).
-func analyzeFiltered(entries []logparser.LogEntry, filter func(logparser.LogEntry) bool, isErrorFilter bool) *Report {
+// Analyze streams log data from r, applies all FilterParams conditions with AND
+// logic, and returns an aggregated Report. Hosts are collected from entries that
+// pass all filters except the host filter, so the host list always reflects what
+// is selectable given the other active filters.
+func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 	statusCodes := make(map[int]int)
 	pages := make(map[string]int)
 	browsers := make(map[string]int)
@@ -119,79 +84,124 @@ func analyzeFiltered(entries []logparser.LogEntry, filter func(logparser.LogEntr
 	ips := make(map[string]int)
 	daily := make(map[string]int)
 	countryCounts := make(map[string]int)
+	hostSeen := make(map[string]bool)
 
 	var totalRequests int
 	var totalBytes int64
 	var totalDuration float64
 
-	for _, entry := range entries {
-		if filter != nil && !filter(entry) {
-			continue
+	logparser.ParseStream(r, func(entry logparser.LogEntry) {
+		req := entry.Request
+
+		clientIP := req.ClientIP
+		if clientIP == "" {
+			clientIP = req.RemoteIP
+		}
+
+		t := time.Unix(int64(entry.Timestamp), int64((entry.Timestamp-float64(int64(entry.Timestamp)))*1e9))
+		day := t.UTC().Format("2006-01-02")
+
+		ua := ""
+		if uaList, ok := req.Headers["User-Agent"]; ok && len(uaList) > 0 {
+			ua = uaList[0]
+		}
+		browser, osName := useragent.Parse(ua)
+
+		countryCode := geoip.Lookup(clientIP)
+		countryName := geoip.CountryName(countryCode)
+
+		// Collect hosts from entries passing every filter except host,
+		// so the host dropdown stays meaningful under all other filters.
+		if passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, params) {
+			if req.Host != "" {
+				hostSeen[req.Host] = true
+			}
+		}
+
+		// Skip entries that don't pass all filters (including host).
+		if params.Host != "" && req.Host != params.Host {
+			return
+		}
+		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, params) {
+			return
 		}
 
 		totalRequests++
 		totalBytes += entry.Size
 		totalDuration += entry.Duration
 
-		req := entry.Request
-		clientIP := req.ClientIP
-		if clientIP == "" {
-			clientIP = req.RemoteIP
-		}
-
-		// GeoIP on original IP before anonymization
-		countryCode := geoip.Lookup(clientIP)
-		countryCounts[countryCode]++
-
-		// Anonymize IP for storage/display
 		anonIP := anonymize.IP(clientIP)
 		ips[anonIP]++
-
-		// User-Agent
-		ua := ""
-		if uaList, ok := req.Headers["User-Agent"]; ok && len(uaList) > 0 {
-			ua = uaList[0]
-		}
-		browser, osName := useragent.Parse(ua)
 		browsers[browser]++
 		oses[osName]++
-
-		// Status
 		statusCodes[entry.Status]++
+		daily[day]++
+		countryCounts[countryCode]++
 
-		// Daily
-		t := time.Unix(int64(entry.Timestamp), int64((entry.Timestamp-float64(int64(entry.Timestamp)))*1e9))
-		daily[t.UTC().Format("2006-01-02")]++
-
-		// Pages: for error filter, include status >= 400; otherwise, only status < 400
-		uri := req.URI
-		if !isAsset(uri) {
-			if isErrorFilter && entry.Status >= 400 {
-				pages[uri]++
-			} else if !isErrorFilter && entry.Status < 400 {
-				pages[uri]++
-			}
+		// Count non-asset pages: for error-scoped queries include error responses,
+		// otherwise include only non-error responses (preserving historic behaviour).
+		if !isAsset(req.URI) && (params.Status == "error" || entry.Status < 400) {
+			pages[req.URI]++
 		}
-	}
+	})
 
 	var avgMs float64
 	if totalRequests > 0 {
 		avgMs = (totalDuration / float64(totalRequests)) * 1000
 	}
 
-	return &Report{
-		TotalRequests:    totalRequests,
-		UniqueIPs:        len(ips),
-		TotalBytes:       totalBytes,
-		AvgResponseMs:    avgMs,
-		StatusCodes:      sortedIntNameCounts(statusCodes),
-		TopPages:         topN(pages, 15),
-		Browsers:         topN(browsers, 10),
-		OperatingSystems: topN(oses, 10),
-		DailyTraffic:     sortedDays(daily),
-		TopVisitors:      topVisitors(ips, 10),
-		Countries:        topCountries(countryCounts, 15),
+	hosts := make([]string, 0, len(hostSeen))
+	for h := range hostSeen {
+		hosts = append(hosts, h)
 	}
+	sort.Strings(hosts)
+
+	return &AnalysisResult{
+		Hosts: hosts,
+		Report: &Report{
+			TotalRequests:    totalRequests,
+			UniqueIPs:        len(ips),
+			TotalBytes:       totalBytes,
+			AvgResponseMs:    avgMs,
+			StatusCodes:      sortedIntNameCounts(statusCodes),
+			TopPages:         topN(pages, 15),
+			Browsers:         topN(browsers, 10),
+			OperatingSystems: topN(oses, 10),
+			DailyTraffic:     sortedDays(daily),
+			TopVisitors:      topVisitors(ips, 10),
+			Countries:        topCountries(countryCounts, 15),
+		},
+	}
+}
+
+// passesNonHostFilters returns true if the entry satisfies every active filter
+// except the host filter.
+func passesNonHostFilters(day string, status int, browser, osName, countryName, uri string, p FilterParams) bool {
+	if p.StartDate != "" && day < p.StartDate {
+		return false
+	}
+	if p.EndDate != "" && day > p.EndDate {
+		return false
+	}
+	if p.Status == "success" && !(status >= 200 && status < 300) {
+		return false
+	}
+	if p.Status == "error" && status < 400 {
+		return false
+	}
+	if p.Browser != "" && browser != p.Browser {
+		return false
+	}
+	if p.OS != "" && osName != p.OS {
+		return false
+	}
+	if p.Country != "" && countryName != p.Country {
+		return false
+	}
+	if p.Page != "" && uri != p.Page {
+		return false
+	}
+	return true
 }
 
 func isAsset(uri string) bool {
@@ -229,10 +239,6 @@ func sortedIntNameCounts(m map[int]int) []NameCount {
 	}
 	sort.Ints(keys)
 	result := make([]NameCount, len(keys))
-	for i, k := range keys {
-		result[i] = NameCount{Name: strings.TrimLeft(strings.Replace(string(rune('0'+k/100))+"xx", "0xx", "", 1), ""), Count: m[k]}
-	}
-	// Actually, let's use the actual status code as string
 	for i, k := range keys {
 		result[i] = NameCount{Name: statusString(k), Count: m[k]}
 	}

@@ -30,18 +30,53 @@
             <div class="filter-group">
                 <label class="filter-label" for="host-select">Site</label>
                 <select id="host-select" class="host-select">
-                    <option value="all">All Sites</option>
+                    <option value="">All Sites</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label class="filter-label">Filter</label>
+                <label class="filter-label">HTTP Status Range</label>
                 <div class="filter-btns">
                     <button class="filter-btn active" data-filter="all">All</button>
                     <button class="filter-btn" data-filter="success">Success (2xx)</button>
                     <button class="filter-btn" data-filter="error">Errors (4xx–5xx)</button>
                 </div>
             </div>
+            <div class="filter-group">
+                <label class="filter-label">Date Range</label>
+                <div class="date-range-inputs">
+                    <input type="date" id="date-start" class="date-input">
+                    <span class="date-range-sep">–</span>
+                    <input type="date" id="date-end" class="date-input">
+                    <button id="date-clear" class="date-clear-btn" title="Clear date filter">✕</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Country</label>
+                <select id="country-filter" class="dim-filter-select">
+                    <option value="">All Countries</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Browser</label>
+                <select id="browser-filter" class="dim-filter-select">
+                    <option value="">All Browsers</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">OS</label>
+                <select id="os-filter" class="dim-filter-select">
+                    <option value="">All OSes</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Page</label>
+                <select id="page-filter" class="dim-filter-select">
+                    <option value="">All Pages</option>
+                </select>
+            </div>
         </div>
+
+        <div class="filter-hint" id="hint-cards"></div>
 
         <section class="cards">
             <div class="card">
@@ -65,11 +100,13 @@
         <section class="grid-2col">
             <div class="panel">
                 <h2>World Map</h2>
+                <div class="filter-hint" id="hint-map"></div>
                 <div id="map-container"></div>
                 <div id="map-tooltip" class="tooltip hidden"></div>
             </div>
             <div class="panel">
                 <h2>Countries</h2>
+                <div class="filter-hint" id="hint-countries"></div>
                 <table id="country-table" class="data-table">
                     <thead><tr><th>Country</th><th>Code</th><th>Requests</th><th>%</th></tr></thead>
                     <tbody></tbody>
@@ -80,26 +117,31 @@
         <section class="grid-2col">
             <div class="panel">
                 <h2>Browsers</h2>
+                <div class="filter-hint" id="hint-browsers"></div>
                 <canvas id="browser-chart" height="300"></canvas>
             </div>
             <div class="panel">
                 <h2>Operating Systems</h2>
+                <div class="filter-hint" id="hint-oses"></div>
                 <canvas id="os-chart" height="300"></canvas>
             </div>
         </section>
 
         <section class="panel full-width">
             <h2>Daily Traffic</h2>
+            <div class="filter-hint" id="hint-daily"></div>
             <canvas id="daily-chart" height="250"></canvas>
         </section>
 
         <section class="grid-2col">
             <div class="panel">
                 <h2>Status Codes</h2>
+                <div class="filter-hint" id="hint-status"></div>
                 <canvas id="status-chart" height="200"></canvas>
             </div>
             <div class="panel">
                 <h2>Top Pages</h2>
+                <div class="filter-hint" id="hint-pages"></div>
                 <table id="pages-table" class="data-table">
                     <thead><tr><th>Page</th><th>Requests</th></tr></thead>
                     <tbody></tbody>
@@ -109,6 +151,7 @@
 
         <section class="panel full-width">
             <h2>Top Visitors</h2>
+            <div class="filter-hint" id="hint-visitors"></div>
             <table id="visitors-table" class="data-table">
                 <thead><tr><th>IP (anonymized)</th><th>Country</th><th>Requests</th></tr></thead>
                 <tbody></tbody>

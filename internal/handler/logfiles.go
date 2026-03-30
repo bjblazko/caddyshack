@@ -58,28 +58,62 @@ func LogFiles(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(files)
 }
 
-// AnalyzeLocal handles GET /api/analyze-local?name=<filename> for server-side log files.
-func AnalyzeLocal(w http.ResponseWriter, r *http.Request) {
-	name := r.URL.Query().Get("name")
-	if name == "" || strings.Contains(name, "/") || strings.Contains(name, "..") {
-		http.Error(w, "Invalid filename", http.StatusBadRequest)
+// Analyze handles GET /api/analyze. It accepts either file=<id> (uploaded temp
+// file) or name=<filename> (server-side log), plus optional filter params:
+// host, start (YYYY-MM-DD), end (YYYY-MM-DD), country, browser, os, page, status.
+func Analyze(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+
+	fileID := q.Get("file")
+	localName := q.Get("name")
+
+	var filePath string
+	switch {
+	case fileID != "":
+		// Uploaded temp file — validate ID is a plain hex string (no path chars).
+		if strings.ContainsAny(fileID, "/\\..") {
+			http.Error(w, "Invalid file id", http.StatusBadRequest)
+			return
+		}
+		filePath = filepath.Join(tempDir, fileID+".jsonl")
+	case localName != "":
+		// Server-side log — guard against path traversal.
+		if strings.Contains(localName, "/") || strings.Contains(localName, "..") {
+			http.Error(w, "Invalid filename", http.StatusBadRequest)
+			return
+		}
+		filePath = filepath.Join(logDir, localName)
+	default:
+		http.Error(w, "Provide file or name query param", http.StatusBadRequest)
 		return
 	}
 
-	path := filepath.Join(logDir, name)
-	file, err := os.Open(path)
+	f, err := os.Open(filePath)
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
-	defer file.Close()
+	defer f.Close()
 
-	log.Printf("Analyzing local log file: %s", path)
+	params := analyzer.FilterParams{
+		Host:      q.Get("host"),
+		StartDate: q.Get("start"),
+		EndDate:   q.Get("end"),
+		Country:   q.Get("country"),
+		Browser:   q.Get("browser"),
+		OS:        q.Get("os"),
+		Page:      q.Get("page"),
+		Status:    q.Get("status"),
+	}
 
-	report := analyzer.Analyze(file)
+	log.Printf("Analyzing %s (host=%q start=%q end=%q country=%q browser=%q os=%q page=%q status=%q)",
+		filePath, params.Host, params.StartDate, params.EndDate,
+		params.Country, params.Browser, params.OS, params.Page, params.Status)
+
+	result := analyzer.Analyze(f, params)
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(report); err != nil {
+	if err := json.NewEncoder(w).Encode(result); err != nil {
 		log.Printf("Error encoding response: %v", err)
 	}
 }

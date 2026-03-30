@@ -42,6 +42,16 @@
 
 ---
 
+### R-05: Uploaded Files Persist in OS Temp Directory
+
+**Description:** Files uploaded via `POST /api/upload` are saved to `os.TempDir()/caddyshack/<hex_id>.jsonl` and are never explicitly deleted by the application. They persist for the lifetime of the process (or until the OS clears the temp directory).
+
+**Impact:** Disk space accumulates if many large files are uploaded. On shared systems, temp files from the current session remain readable by other processes with filesystem access.
+
+**Mitigation:** This is acceptable for single-user and small-team deployments. The OS temp directory is typically cleaned on reboot. For long-running deployments, operators can add a periodic cleanup cron for `os.TempDir()/caddyshack/`. A future improvement could add a TTL-based cleanup goroutine at startup.
+
+---
+
 ## Technical Debt
 
 ### TD-01: No Automated Tests
@@ -72,6 +82,6 @@ The lat/lon centroid for each country used in the bubble map is a static lookup 
 
 ### TD-04: No Streaming to Client
 
-The analysis must complete before any response is sent. For very large log files, the browser shows a loading overlay with no progress indication.
+The analysis must complete before any response is sent. For very large log files, the browser shows a loading overlay with no progress indication. With the backend filter-then-aggregate model, every filter change re-triggers a full analysis pass.
 
-**Suggested action:** Consider server-sent events or chunked JSON to report progress for large files. Low priority given the 500 MB upload cap.
+**Suggested action:** Consider server-sent events or chunked JSON to report progress for large files. Low priority given the 500 MB upload cap and sub-second analysis time for typical log sizes.

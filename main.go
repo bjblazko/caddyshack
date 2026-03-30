@@ -19,7 +19,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/upload", handler.Upload)
 	mux.HandleFunc("GET /api/logs", handler.LogFiles)
-	mux.HandleFunc("GET /api/analyze-local", handler.AnalyzeLocal)
+	mux.HandleFunc("GET /api/analyze", handler.Analyze)
 	mux.HandleFunc("GET /api/health", handler.Health)
 	mux.Handle("/", http.FileServer(http.Dir("static")))
 

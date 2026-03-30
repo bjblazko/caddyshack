@@ -5,20 +5,24 @@
 ```mermaid
 graph TB
     subgraph Browser["Browser — Vanilla HTML/JS/CSS"]
-        appjs["app.js\nupload & render"]
+        appjs["app.js\nupload, filter state & render"]
         chartsjs["charts.js\nCanvas 2D bar charts"]
         mapjs["map.js\nD3 geo bubbles"]
     end
 
     subgraph Backend["Go Backend — net/http"]
-        handler["handler\nUpload · Health · Logs · AnalyzeLocal"]
-        analyzer["analyzer.Analyze"]
+        handler["handler\nUpload · Health · Logs · Analyze"]
+        analyzer["analyzer.Analyze(r, FilterParams)"]
         fileserver["http.FileServer\nstatic/ (embedded)"]
+        tmpdir["OS temp dir\ncaddyshack/<id>.jsonl"]
     end
 
     appjs -->|"POST /api/upload\nmultipart/form-data"| handler
-    appjs -->|"GET /api/logs\nGET /api/analyze-local"| handler
+    appjs -->|"GET /api/analyze?file=<id>&..filters.."| handler
+    appjs -->|"GET /api/logs"| handler
     appjs -->|"GET /css, /js, /data …"| fileserver
+    handler -->|"save file"| tmpdir
+    handler -->|"re-open file"| tmpdir
     handler --> analyzer
 ```
 
@@ -44,8 +48,8 @@ No circular dependencies. Each package has a single responsibility.
 | Package | Responsibility |
 |---------|---------------|
 | `main` | Entry point: parse CLI flags, load GeoIP database, register routes, start HTTP server |
-| `internal/handler` | HTTP request/response boundary: parse multipart upload, enforce size limits, JSON-encode responses |
-| `internal/analyzer` | Core aggregation engine: orchestrate a single-pass stream, build and trim all counter maps, produce `MultiHostReport` |
+| `internal/handler` | HTTP request/response boundary: parse multipart upload, save to temp dir, parse filter query params, enforce size limits, JSON-encode responses |
+| `internal/analyzer` | Core aggregation engine: single streaming pass with AND filter logic (via `FilterParams`), host collection, counter maps → `AnalysisResult` |
 | `internal/logparser` | JSONL deserialization: read line-by-line with `bufio.Scanner`, decode JSON, expose `LogEntry` structs |
 | `internal/useragent` | User-Agent string parsing: ordered string matching to detect browser and OS names |
 | `internal/anonymize` | IP anonymization: zero last IPv4 octet; truncate IPv6 to first 3 groups |
@@ -55,7 +59,7 @@ No circular dependencies. Each package has a single responsibility.
 
 | Module | Responsibility |
 |--------|---------------|
-| `app.js` | Main orchestrator: file upload, API call, DOM population, host/filter state |
+| `app.js` | Main orchestrator: file upload, filter state management, `GET /api/analyze` on every filter change, DOM population, dimension dropdown repopulation, filter hints |
 | `charts.js` (`Charts` namespace) | Canvas 2D horizontal and vertical bar charts with DPR scaling |
 | `map.js` (`WorldMap` namespace) | D3.js Natural Earth bubble map with proportional sizing and hover tooltips |
 
@@ -64,9 +68,9 @@ No circular dependencies. Each package has a single responsibility.
 | Type | Owner | Description |
 |------|-------|-------------|
 | `LogEntry` | logparser | Deserialized Caddy log line |
-| `MultiHostReport` | analyzer | Root response: hosts list + per-host FullReports |
-| `FullReport` | analyzer | Three `Report` objects: All, Success, Error |
-| `Report` | analyzer | Aggregated metrics for one host + one status filter |
+| `FilterParams` | analyzer | All active filter dimensions: host, start/end date, country, browser, OS, page, status |
+| `AnalysisResult` | analyzer | Root response: optional `FileID`, `Hosts []string`, `Report *Report` |
+| `Report` | analyzer | Aggregated metrics for the current filter combination |
 | `NameCount` | analyzer | Generic `{name, count}` tuple |
 | `DayCount` | analyzer | `{date, count}` for daily traffic |
 | `VisitorInfo` | analyzer | `{ip, count, country, country_name}` for top visitors |

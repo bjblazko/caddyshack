@@ -1,7 +1,7 @@
 # ADR-001: Stateless, Request-Scoped Analysis
 
 **Date:** 2026-03-29
-**Status:** Accepted
+**Status:** Superseded by ADR-009
 
 ## Context
 

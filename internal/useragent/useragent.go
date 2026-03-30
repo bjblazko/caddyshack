@@ -42,7 +42,7 @@ func Parse(ua string) (browser, os string) {
 		browser = "Brave"
 	case strings.Contains(ua, "Chrome/") && strings.Contains(ua, "Safari/"):
 		browser = "Chrome"
-	case strings.Contains(ua, "Safari/") && !strings.Contains(ua, "Chrome/"):
+	case strings.Contains(ua, "Safari/") && !strings.Contains(ua, "Chrome/") && strings.Contains(ua, "Version/"):
 		browser = "Safari"
 	case strings.Contains(ua, "Firefox/"):
 		browser = "Firefox"

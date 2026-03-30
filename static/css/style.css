@@ -344,9 +344,119 @@ main {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.date-range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.date-input {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.7rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.date-input:hover,
+.date-input:focus {
+    border-color: var(--green-mid);
+    outline: none;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.date-range-sep {
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.date-clear-btn {
+    background: none;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.65rem;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.date-clear-btn:hover {
+    border-color: var(--green-mid);
+    color: var(--green-mid);
+}
+
+.filter-hint {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    min-height: 1.5rem;
+    margin-bottom: 0.6rem;
+    align-items: center;
+}
+
+.filter-tag {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.filter-tag--active {
+    background: var(--green-pale);
+    color: var(--green-dark);
+    border: 1px solid var(--green-light);
+}
+
+.filter-tag--none {
+    color: var(--text-light);
+    font-style: italic;
+}
+
+/* hint row above cards sits outside .panel so no margin-bottom needed there */
+#hint-cards {
+    margin-bottom: 0.5rem;
+}
+
+.dim-filter-select {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.55rem 2rem 0.55rem 0.9rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    max-width: 220px;
+    transition: border-color 0.2s;
+}
+
+.dim-filter-select:hover,
+.dim-filter-select:focus {
+    border-color: var(--green-mid);
+    outline: none;
+}
+
 @media (max-width: 768px) {
     header { flex-direction: column; text-align: center; }
     .upload-zone { min-width: auto; width: 100%; }
     .grid-2col { grid-template-columns: 1fr; }
     .cards { grid-template-columns: repeat(2, 1fr); }
+    .date-range-inputs { flex-wrap: wrap; }
 }

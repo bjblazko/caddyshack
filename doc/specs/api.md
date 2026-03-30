@@ -4,15 +4,44 @@
 
 ### `POST /api/upload`
 
-Upload a Caddy JSONL log file for analysis.
+Upload a Caddy JSONL log file. The file is saved to the OS temp directory and a
+`file_id` is returned. Use the `file_id` with `GET /api/analyze` to re-analyze
+with filter parameters.
 
 **Request**
 - Content-Type: `multipart/form-data`
 - Field: `logfile` — the JSONL file
 - Max size: 500 MB
 
-**Response** `200 OK` — `MultiHostReport` JSON object
+**Response** `200 OK` — `AnalysisResult` JSON (includes `file_id`)
 **Error** `400 Bad Request` — missing field, invalid multipart, or file too large
+
+---
+
+### `GET /api/analyze`
+
+Analyze a log file with optional filter parameters. All filter conditions are
+ANDed before aggregation.
+
+**File source** (exactly one required):
+- `file=<id>` — ID returned by `POST /api/upload`
+- `name=<filename>` — bare filename from `/var/log/caddy` (no path components)
+
+**Filter parameters** (all optional):
+| Param | Description |
+|-------|-------------|
+| `host` | Virtual host (exact match). Omit for all hosts. |
+| `start` | Start date `YYYY-MM-DD` (inclusive). |
+| `end` | End date `YYYY-MM-DD` (inclusive). |
+| `country` | Country name (exact match, e.g. `Germany`). |
+| `browser` | Browser name (exact match, e.g. `Chrome`). |
+| `os` | OS name (exact match, e.g. `macOS`). |
+| `page` | Exact URI (e.g. `/blog/post-1`). |
+| `status` | `success` (2xx) or `error` (4xx+). Omit for all. |
+
+**Response** `200 OK` — `AnalysisResult` (no `file_id` in this response)
+**Error** `400 Bad Request` — missing or invalid params
+**Error** `404 Not Found` — file not found
 
 ---
 
@@ -30,15 +59,6 @@ List log files available on the server (from `/var/log/caddy`).
 
 ---
 
-### `GET /api/analyze-local?name=<filename>`
-
-Analyze a server-side log file by name. `name` must be a bare filename — no path components.
-
-**Response** `200 OK` — `MultiHostReport` (same shape as `/api/upload`)
-**Error** `400 Bad Request` — missing or invalid `name` parameter
-
----
-
 ### `GET /api/health`
 
 Health check.
@@ -50,17 +70,19 @@ Health check.
 
 ---
 
-## Response Shape: `MultiHostReport`
+## Response Shape: `AnalysisResult`
 
 ```json
 {
+  "file_id": "a3f1...",
   "hosts": ["example.com", "blog.example.com"],
-  "by_host": {
-    "__all__": { "all": Report, "success": Report, "error": Report },
-    "example.com": { "all": Report, "success": Report, "error": Report }
-  }
+  "report": { ...Report... }
 }
 ```
+
+`file_id` is only present in the `POST /api/upload` response.
+`hosts` lists virtual hosts found in entries that satisfy all active filters
+except the host filter, so the list reflects what can usefully be selected.
 
 ## `Report` Object
 
@@ -84,7 +106,7 @@ Health check.
 
 | Field | Type | Limit | Notes |
 |-------|------|-------|-------|
-| `total_requests` | int | — | All parsed entries |
+| `total_requests` | int | — | Entries passing all filters |
 | `unique_ips` | int | — | Distinct anonymized IPs |
 | `total_bytes` | int | — | Sum of response sizes |
 | `avg_response_ms` | float64 | — | Mean duration × 1000 |

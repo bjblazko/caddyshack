@@ -1,43 +1,69 @@
 # 6. Runtime View
 
-## Scenario 1: Browser Upload and Analysis
+## Scenario 1: Browser Upload and Initial Analysis
 
-The primary use case: the operator drops a log file onto the dashboard.
+The operator drops a log file onto the dashboard. The file is saved to the OS temp directory and immediately analyzed with no active filters.
 
 ```mermaid
 sequenceDiagram
     participant B as Browser
     participant H as handler.Upload
+    participant FS as OS temp dir
     participant A as analyzer.Analyze
     participant LP as logparser / geoip / anonymize / useragent
 
     B->>H: POST /api/upload (multipart, logfile)
     Note over H: MaxBytesReader(500 MB)<br/>ParseMultipartForm()<br/>extract file reader
-    H->>A: Analyze(reader)
+    H->>FS: write <hex_id>.jsonl
+    FS-->>H: file path
+    H->>FS: re-open file
+    H->>A: Analyze(reader, FilterParams{})
     loop for each line
         A->>LP: ParseStream(reader)
         LP-->>A: LogEntry
-        Note over A: 1. extract client_ip / remote_ip<br/>2. geoip.Lookup(original ip)<br/>3. anonymize.IP(original ip)<br/>4. useragent.Parse(UA header)<br/>5. increment all counters
+        Note over A: 1. extract client_ip / remote_ip<br/>2. geoip.Lookup(original ip)<br/>3. anonymize.IP(original ip)<br/>4. useragent.Parse(UA header)<br/>5. apply AND filter conditions<br/>6. collect host / increment counters
     end
     Note over A: sort + trim counters
-    A-->>H: MultiHostReport
+    A-->>H: AnalysisResult{FileID, Hosts, Report}
     Note over H: JSON encode
-    H-->>B: 200 OK (JSON)
-    Note over B: render dashboard<br/>(app.js + charts.js + map.js)
+    H-->>B: 200 OK (JSON with file_id)
+    Note over B: render dashboard<br/>store file_id
 ```
-
-**Memory lifecycle:** all parsed data (counters, maps) exists only within `analyzer.Analyze`. Once the JSON response is written, the memory is eligible for GC.
 
 ---
 
-## Scenario 2: Server-Side Log Analysis
+## Scenario 2: Filter Change (Backend Re-Analysis)
 
-The operator selects a log file from the server's `/var/log/caddy` directory without uploading it.
+After the initial upload, every filter change (host, status, date range, country, browser, OS, page) triggers a full backend re-analysis of the same temp file with the new `FilterParams`.
 
 ```mermaid
 sequenceDiagram
     participant B as Browser
-    participant H as handler.Logs / AnalyzeLocal
+    participant H as handler.Analyze
+    participant FS as OS temp dir
+    participant A as analyzer.Analyze
+
+    B->>H: GET /api/analyze?file=<id>&host=x&start=2026-01-01&...
+    Note over H: parse FilterParams from query string<br/>validate file_id (no path chars)
+    H->>FS: open <id>.jsonl
+    FS-->>H: io.Reader
+    H->>A: Analyze(reader, FilterParams{Host, StartDate, ...})
+    Note over A: single pass: filter entries (AND),<br/>collect hosts, aggregate counters
+    A-->>H: AnalysisResult{Hosts, Report}
+    H-->>B: 200 OK (JSON, no file_id)
+    Note over B: renderDashboard(result.report)<br/>repopulate dimension dropdowns
+```
+
+---
+
+## Scenario 3: Server-Side Log Analysis
+
+The operator selects a log file from the server's `/var/log/caddy` directory. On every filter change the file is re-read from disk (no temp copy needed).
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant H as handler.Logs / Analyze
     participant FS as Filesystem
 
     B->>H: GET /api/logs
@@ -45,28 +71,12 @@ sequenceDiagram
     FS-->>H: []LogFileInfo
     H-->>B: 200 OK (JSON array)
 
-    B->>H: GET /api/analyze-local?name=access.json
-    Note over H: validate name (no path separator)<br/>Open(file)
-    H->>FS: Open(file)
+    B->>H: GET /api/analyze?name=access.json&host=x&...
+    Note over H: validate name (no path separator)<br/>Open(/var/log/caddy/access.json)
+    H->>FS: open file
     FS-->>H: io.Reader
-    Note over H: → analyzer.Analyze(reader)
-    H-->>B: 200 OK (MultiHostReport)
-```
-
----
-
-## Scenario 3: Host / Filter Switch (Client-Side Only)
-
-After the initial analysis, switching host or traffic filter requires no server call.
-
-```mermaid
-flowchart TD
-    A["User selects host or traffic filter"] --> B["app.js reads cached data\nreport = fullData.by_host[host][filter]"]
-    B --> C["Charts.renderBarChart\n(browsers, OS, status codes)"]
-    B --> D["Charts.renderVerticalBarChart\n(daily traffic)"]
-    B --> E["WorldMap.render\n(country bubbles)"]
-    B --> F["DOM table updates\n(pages, visitors, countries)"]
-    C & D & E & F --> G["No HTTP request made"]
+    Note over H: → analyzer.Analyze(reader, FilterParams)
+    H-->>B: 200 OK (AnalysisResult, no file_id)
 ```
 
 ---
