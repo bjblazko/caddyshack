@@ -31,11 +31,11 @@ Read CHANGELOG.md. Find everything between `## [Unreleased]` and the next `## [`
   - If they want to proceed without notes, continue.
   - If they want to add notes first, stop here.
 
-- **More than one category header:** **STOP** and tell the user:
+- **Duplicate category headers** (e.g. two `### Added` blocks): **STOP** and tell the user:
 
-  > The [Unreleased] section has multiple categories: [list them]. Each release entry must have exactly one category. Please consolidate the entries (pick the dominant one, or move some to a future release), then run /release again.
+  > The [Unreleased] section has duplicate category headers: [list the duplicates]. Please merge the duplicate sections so each category appears at most once, then run /release again.
 
-- **Exactly one category header (or zero entries and user confirmed):** Proceed.
+- **One or more category headers with no duplicates (or zero entries and user confirmed):** Proceed.
 
 ### 4. Find the previous version
 
