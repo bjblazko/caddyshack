@@ -2,7 +2,7 @@
 
 <img src="static/img/caddyshack-logo.png" alt="CaddyShack Logo" width="128">
 
-A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access logs. Upload a JSONL log file and get instant visual insights: traffic trends, browser and OS breakdowns, geographic distribution on a world map, top pages, status codes, and more — entirely in your browser, with no data leaving your machine.
+A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access logs. Upload a JSONL log file and get instant visual insights: traffic trends, browser and OS breakdowns, geographic distribution on a world map, top pages, status codes, raw event log, and more — entirely in your browser, with no data leaving your machine.
 
 ## Screenshots
 
@@ -20,8 +20,10 @@ A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access log
 - **HTTP status code** breakdown — see 2xx, 3xx, 4xx, and 5xx ratios visually
 - **Top pages** listing the most-visited URIs (static assets automatically excluded)
 - **Top visitors** with anonymized IPs and country attribution
-- **Multi-host support** — analyze logs containing multiple virtual hosts, with per-host and aggregate views
-- **Success/error segmentation** — switch between all traffic, 2xx only, and 4xx+ only
+- **Single Events tab** — scroll through raw log entries (most recent first) with lazy loading; 4xx/5xx rows highlighted in red
+- **Multi-host support** — analyze logs containing multiple virtual hosts, with per-host filtering
+- **8-dimension filtering** — filter by site, HTTP status range, date range, country, browser, OS, and page simultaneously; all filters are applied on the backend with AND logic in a single streaming pass
+- **Filter hint badges** per panel — each chart and table shows which filters are currently active
 - **GDPR-compliant** IP anonymization: last octet zeroed for IPv4, prefix truncated for IPv6
 - **Offline-first frontend** — D3.js and TopoJSON are served locally, no CDN calls
 
@@ -114,9 +116,11 @@ See [doc/spec/log-format.md](doc/spec/log-format.md) for the full field specific
 
 CaddyShack is designed around three principles:
 
-- **Stateless** — all analysis happens within the HTTP request. No database, no session state, no persistence. Each upload is independent.
+- **Filter-then-aggregate** — all filter dimensions (host, date range, country, browser, OS, page, HTTP status) are applied on the backend with AND logic in a single streaming pass before any aggregation. Every filter combination is accurate by construction; no client-side re-aggregation.
 - **Streaming** — logs are parsed line-by-line with `bufio.Scanner`. Memory usage grows with the number of unique values (IPs, pages, countries), not with the number of log lines.
-- **No frameworks** — pure Go standard library (`net/http`) on the backend, vanilla HTML/CSS/JavaScript on the frontend. The binary embeds all static assets; deployment is a single file.
+- **No frameworks** — pure Go standard library (`net/http`) on the backend, vanilla HTML/CSS/JavaScript on the frontend. No external Go dependencies; deployment is a single binary.
+
+Uploaded files are saved to the OS temp directory under a random hex ID so filter changes can re-analyze the same file without re-uploading.
 
 ## Test Data
 

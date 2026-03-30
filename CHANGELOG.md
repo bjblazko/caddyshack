@@ -9,37 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Single Events tab: browse raw log entries (most recent first) with lazy loading — 100 events per page, more load automatically on scroll via IntersectionObserver
+- `GET /api/events` endpoint: same filter params as `/api/analyze`, returns paginated `EventsResult` with enriched `EventEntry` rows (timestamp ISO 8601, method, host, URI, status, size, duration, anonymized IP, country, browser, OS)
+- Per-panel filter hint badges showing all active filters (site, HTTP status range, date, country, browser, OS, page); panels with no active filter display "all data"
 - Backend filter-then-aggregate architecture (ADR-009): all filter dimensions (host, date range, country, browser, OS, page, HTTP status) applied with AND logic in a single streaming pass before aggregation; replaces client-side re-aggregation
 - Uploaded log files saved to OS temp directory under a random hex ID; subsequent filter changes re-analyze the same file via `GET /api/analyze?file=<id>` without re-uploading
 - Date range filter: native `<input type="date">` controls (start/end) with clear button; filters all dashboard panels via backend
 - Dimension dropdown filters: Country, Browser, OS, Page — options populated from the current backend response, auto-reset when the selected value disappears under a new filter combination
-- Per-panel filter hint badges showing all active filters; panels without active filters display "all data"
 - `FilterParams` struct carrying all filter dimensions passed to `analyzer.Analyze`
 - `AnalysisResult` response type (`file_id`, `hosts`, `report`) replacing `MultiHostReport`/`FullReport`
 - `GET /api/analyze` endpoint accepting all filter params as query-string arguments
-- ADR-009 documenting the backend filter-then-aggregate decision and temp file storage trade-offs
-- R-05 risk entry for temp file accumulation in OS temp directory
-
-### Changed
-
-- `POST /api/upload` now saves the file to temp storage and returns `file_id` alongside the initial analysis result
-- Host dropdown options reflect only hosts present under the current non-host filter combination
-- HTTP status filter group label renamed from "Filter" to "HTTP Status Range"
-- Filter hint badges now include the active site (host) and HTTP status range alongside other dimension filters
-- Safari browser detection tightened: requires `Version/X.X` token to exclude HTTP clients with partial WebKit UA strings
-- `GET /api/analyze-local` replaced by `GET /api/analyze` (accepts both `file=<id>` and `name=<filename>`)
-- ADR-001 marked superseded by ADR-009
-- Specs updated: `analysis.md`, `api.md`, `ui.md`; arch docs updated: building block view, runtime view, risks
-
-### Glossary of project terms and concepts at `doc/glossary.md`
-- arc42 architecture documentation in `doc/arch/` (12 sections: introduction, constraints, context, solution strategy, building block view, runtime view, deployment view, crosscutting concepts, quality requirements, risks, glossary)
-- 8 Architecture Decision Records in `doc/arch/adr/` covering stateless analysis, single binary, vanilla JS, standard library, IP anonymization, optional GeoIP, Canvas 2D charts, and single-pass streaming
+- Glossary of project terms and concepts at `doc/glossary.md`
+- arc42 architecture documentation in `doc/arch/` (12 sections)
+- 9 Architecture Decision Records in `doc/arch/adr/`
 - Current-state specs in `doc/specs/` grouped by concern: parsing, analysis, security, ui, api, deployment
-- Feature tracking structure in `doc/features/` with todo/in-progress/done folders and feature files for all shipped functionality
+- Feature tracking structure in `doc/features/` with todo/in-progress/done folders
 - `CLAUDE.md` with project conventions for glossary use, feature tracking, spec maintenance, ADR consultation, and Mermaid-only diagrams
 
 ### Changed
 
+- Dashboard split into tabbed layout: Statistics (all existing panels) and Single events
+- 4xx/5xx event rows highlighted in red in the Single Events table
+- `POST /api/upload` now saves the file to temp storage and returns `file_id` alongside the initial analysis result
+- Host dropdown options reflect only hosts present under the current non-host filter combination
+- HTTP status filter group label renamed from "Filter" to "HTTP Status Range"
+- Safari browser detection tightened: requires `Version/X.X` token to exclude HTTP clients with partial WebKit UA strings
+- `GET /api/analyze-local` replaced by `GET /api/analyze` (accepts both `file=<id>` and `name=<filename>`)
 - Replaced all ASCII box-drawing diagrams with Mermaid diagrams across `doc/arch/` and `doc/specs/`
 - Replaced personal domain in test data with `example.com`; renamed `testdata/sample-huepattl.jsonl` to `testdata/sample-example.jsonl`
 
