@@ -72,6 +72,30 @@ type AnalysisResult struct {
 	Report *Report  `json:"report"`
 }
 
+// EventEntry is a single enriched log entry for the Single Events view.
+type EventEntry struct {
+	Timestamp   string  `json:"ts"`
+	Method      string  `json:"method"`
+	Host        string  `json:"host"`
+	URI         string  `json:"uri"`
+	Status      int     `json:"status"`
+	Size        int64   `json:"size"`
+	DurationMs  float64 `json:"duration_ms"`
+	IP          string  `json:"ip"`
+	Country     string  `json:"country"`
+	CountryName string  `json:"country_name"`
+	Browser     string  `json:"browser"`
+	OS          string  `json:"os"`
+}
+
+// EventsResult is the paginated response from ListEvents.
+type EventsResult struct {
+	Total  int          `json:"total"`
+	Offset int          `json:"offset"`
+	Limit  int          `json:"limit"`
+	Events []EventEntry `json:"events"`
+}
+
 // Analyze streams log data from r, applies all FilterParams conditions with AND
 // logic, and returns an aggregated Report. Hosts are collected from entries that
 // pass all filters except the host filter, so the host list always reflects what
@@ -292,6 +316,85 @@ func topVisitors(m map[string]int, n int) []VisitorInfo {
 		}
 	}
 	return result
+}
+
+// ListEvents streams log data from r, applies all FilterParams with AND logic,
+// enriches each matching entry (GeoIP, UA, anonymized IP), sorts most-recent-first,
+// and returns a paginated slice. limit is capped at 200.
+func ListEvents(r io.Reader, params FilterParams, offset, limit int) *EventsResult {
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+
+	type rawEvent struct {
+		ts    float64
+		entry EventEntry
+	}
+	var all []rawEvent
+
+	logparser.ParseStream(r, func(entry logparser.LogEntry) {
+		req := entry.Request
+
+		clientIP := req.ClientIP
+		if clientIP == "" {
+			clientIP = req.RemoteIP
+		}
+
+		t := time.Unix(int64(entry.Timestamp), int64((entry.Timestamp-float64(int64(entry.Timestamp)))*1e9))
+		day := t.UTC().Format("2006-01-02")
+
+		ua := ""
+		if uaList, ok := req.Headers["User-Agent"]; ok && len(uaList) > 0 {
+			ua = uaList[0]
+		}
+		browser, osName := useragent.Parse(ua)
+
+		countryCode := geoip.Lookup(clientIP)
+		countryName := geoip.CountryName(countryCode)
+
+		if params.Host != "" && req.Host != params.Host {
+			return
+		}
+		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, params) {
+			return
+		}
+
+		all = append(all, rawEvent{
+			ts: entry.Timestamp,
+			entry: EventEntry{
+				Timestamp:   t.UTC().Format(time.RFC3339Nano),
+				Method:      req.Method,
+				Host:        req.Host,
+				URI:         req.URI,
+				Status:      entry.Status,
+				Size:        entry.Size,
+				DurationMs:  entry.Duration * 1000,
+				IP:          anonymize.IP(clientIP),
+				Country:     countryCode,
+				CountryName: countryName,
+				Browser:     browser,
+				OS:          osName,
+			},
+		})
+	})
+
+	sort.Slice(all, func(i, j int) bool {
+		return all[i].ts > all[j].ts
+	})
+
+	total := len(all)
+	if offset >= total {
+		return &EventsResult{Total: total, Offset: offset, Limit: limit, Events: []EventEntry{}}
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+	events := make([]EventEntry, end-offset)
+	for i, raw := range all[offset:end] {
+		events[i] = raw.entry
+	}
+	return &EventsResult{Total: total, Offset: offset, Limit: limit, Events: events}
 }
 
 func topCountries(m map[string]int, n int) []CountryCount {

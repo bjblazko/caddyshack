@@ -20,6 +20,7 @@ func main() {
 	mux.HandleFunc("POST /api/upload", handler.Upload)
 	mux.HandleFunc("GET /api/logs", handler.LogFiles)
 	mux.HandleFunc("GET /api/analyze", handler.Analyze)
+	mux.HandleFunc("GET /api/events", handler.Events)
 	mux.HandleFunc("GET /api/health", handler.Health)
 	mux.Handle("/", http.FileServer(http.Dir("static")))
 

@@ -27,6 +27,13 @@
 
     let dateDebounceTimer = null;
 
+    // Tab & events state.
+    let activeTab      = 'statistics';
+    let eventsOffset   = 0;
+    let eventsTotal    = 0;
+    let eventsLoading  = false;
+    let eventsDirty    = true;
+
     // ── File loading ──────────────────────────────────────────────────────────
 
     uploadZone.addEventListener('dragover', (e) => {
@@ -157,6 +164,9 @@
         } finally {
             loading.classList.add('hidden');
         }
+        // Mark events as stale; reload immediately if on events tab.
+        eventsDirty = true;
+        if (activeTab === 'events') loadEvents(true);
     }
 
     function scheduleFetch() {
@@ -168,6 +178,7 @@
         populateHostDropdown(result.hosts || []);
         dashboard.classList.remove('hidden');
         renderDashboard(result.report);
+        if (activeTab === 'events' && eventsDirty) loadEvents(true);
     }
 
     // ── Filter state reset ────────────────────────────────────────────────────
@@ -191,6 +202,14 @@
         document.getElementById('browser-filter').value = '';
         document.getElementById('os-filter').value      = '';
         document.getElementById('page-filter').value    = '';
+
+        eventsOffset  = 0;
+        eventsTotal   = 0;
+        eventsLoading = false;
+        eventsDirty   = true;
+        const tbody = document.getElementById('events-tbody');
+        if (tbody) tbody.innerHTML = '';
+        setEventsStatus('');
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
@@ -253,7 +272,6 @@
             opt.textContent = h;
             hostSelect.appendChild(opt);
         }
-        // Preserve selection if still valid; otherwise reset.
         if (currentHost && hosts.includes(currentHost)) {
             hostSelect.value = currentHost;
         } else {
@@ -365,14 +383,13 @@
         const statusLabel = currentStatus === 'success' ? 'Success (2xx)'
             : currentStatus === 'error' ? 'Errors (4xx–5xx)' : null;
 
-        // All filters are applied on the backend — every panel reflects all active filters.
         const allTags = [currentHost || null, statusLabel, date, currentCountry,
                          currentBrowser, currentOS, pageLabel]
             .filter(Boolean);
 
         for (const id of ['hint-cards', 'hint-daily', 'hint-map', 'hint-countries',
                           'hint-browsers', 'hint-oses', 'hint-status', 'hint-pages',
-                          'hint-visitors']) {
+                          'hint-visitors', 'hint-events']) {
             setHint(id, allTags);
         }
     }
@@ -394,6 +411,110 @@
                 el.appendChild(tag);
             }
         }
+    }
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.getAttribute('data-tab');
+            if (tab === activeTab) return;
+            activeTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab-statistics').classList.toggle('hidden', tab !== 'statistics');
+            document.getElementById('tab-events').classList.toggle('hidden', tab !== 'events');
+            if (tab === 'events' && eventsDirty) loadEvents(true);
+        });
+    });
+
+    // ── Single events ─────────────────────────────────────────────────────────
+
+    async function loadEvents(reset) {
+        if (!fileRef || eventsLoading) return;
+        if (reset) {
+            eventsOffset = 0;
+            eventsTotal  = 0;
+            document.getElementById('events-tbody').innerHTML = '';
+        }
+        eventsLoading = true;
+        setEventsStatus('Loading…');
+
+        const p = buildQuery();
+        p.set('offset', eventsOffset);
+        p.set('limit', 100);
+
+        try {
+            const resp = await fetch('/api/events?' + p);
+            if (!resp.ok) throw new Error(await resp.text() || resp.statusText);
+            const result = await resp.json();
+            eventsTotal = result.total;
+            appendEventRows(result.events || []);
+            eventsOffset += (result.events || []).length;
+            eventsDirty = false;
+            updateEventsStatus();
+        } catch (err) {
+            setEventsStatus('Error loading events: ' + err.message);
+        } finally {
+            eventsLoading = false;
+        }
+    }
+
+    function appendEventRows(events) {
+        const tbody = document.getElementById('events-tbody');
+        for (const ev of events) {
+            const tr = document.createElement('tr');
+            if (ev.status >= 400) tr.classList.add('error-row');
+
+            const cells = [
+                { text: ev.ts, cls: 'ts' },
+                { text: ev.method },
+                { text: ev.host },
+                { text: ev.uri, cls: 'uri', title: ev.uri },
+                { text: String(ev.status), cls: ev.status >= 400 ? 'status-err' : '' },
+                { text: formatBytes(ev.size) },
+                { text: ev.duration_ms.toFixed(1) + ' ms' },
+                { text: ev.ip },
+                { text: ev.country_name || ev.country },
+                { text: ev.browser },
+                { text: ev.os },
+            ];
+
+            for (const c of cells) {
+                const td = document.createElement('td');
+                td.textContent = c.text;
+                if (c.cls) td.className = c.cls;
+                if (c.title) td.title = c.title;
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        }
+    }
+
+    function updateEventsStatus() {
+        if (eventsTotal === 0) {
+            setEventsStatus('No events match the current filters.');
+        } else if (eventsOffset >= eventsTotal) {
+            setEventsStatus('All ' + eventsTotal.toLocaleString() + ' events loaded.');
+        } else {
+            setEventsStatus('Showing ' + eventsOffset.toLocaleString() + ' of ' + eventsTotal.toLocaleString() + ' events — scroll for more');
+        }
+    }
+
+    function setEventsStatus(msg) {
+        const el = document.getElementById('events-status');
+        if (el) el.textContent = msg;
+    }
+
+    // Lazy-load more events when the sentinel scrolls into view.
+    const sentinel = document.getElementById('events-sentinel');
+    if (sentinel) {
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && eventsOffset < eventsTotal && !eventsLoading) {
+                loadEvents(false);
+            }
+        }, { rootMargin: '200px' });
+        observer.observe(sentinel);
     }
 
     // ── Utilities ─────────────────────────────────────────────────────────────

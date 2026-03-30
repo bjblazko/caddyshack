@@ -76,87 +76,122 @@
             </div>
         </div>
 
-        <div class="filter-hint" id="hint-cards"></div>
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="statistics">Statistics</button>
+            <button class="tab-btn" data-tab="events">Single events</button>
+        </div>
 
-        <section class="cards">
-            <div class="card">
-                <span class="card-value" id="total-requests">—</span>
-                <span class="card-label">Total Requests</span>
-            </div>
-            <div class="card">
-                <span class="card-value" id="unique-ips">—</span>
-                <span class="card-label">Unique IPs</span>
-            </div>
-            <div class="card">
-                <span class="card-value" id="total-bytes">—</span>
-                <span class="card-label">Transferred</span>
-            </div>
-            <div class="card">
-                <span class="card-value" id="avg-response">—</span>
-                <span class="card-label">Avg Response</span>
-            </div>
-        </section>
+        <div id="tab-statistics" class="tab-panel">
+            <div class="filter-hint" id="hint-cards"></div>
 
-        <section class="grid-2col">
-            <div class="panel">
-                <h2>World Map</h2>
-                <div class="filter-hint" id="hint-map"></div>
-                <div id="map-container"></div>
-                <div id="map-tooltip" class="tooltip hidden"></div>
-            </div>
-            <div class="panel">
-                <h2>Countries</h2>
-                <div class="filter-hint" id="hint-countries"></div>
-                <table id="country-table" class="data-table">
-                    <thead><tr><th>Country</th><th>Code</th><th>Requests</th><th>%</th></tr></thead>
+            <section class="cards">
+                <div class="card">
+                    <span class="card-value" id="total-requests">—</span>
+                    <span class="card-label">Total Requests</span>
+                </div>
+                <div class="card">
+                    <span class="card-value" id="unique-ips">—</span>
+                    <span class="card-label">Unique IPs</span>
+                </div>
+                <div class="card">
+                    <span class="card-value" id="total-bytes">—</span>
+                    <span class="card-label">Transferred</span>
+                </div>
+                <div class="card">
+                    <span class="card-value" id="avg-response">—</span>
+                    <span class="card-label">Avg Response</span>
+                </div>
+            </section>
+
+            <section class="grid-2col">
+                <div class="panel">
+                    <h2>World Map</h2>
+                    <div class="filter-hint" id="hint-map"></div>
+                    <div id="map-container"></div>
+                    <div id="map-tooltip" class="tooltip hidden"></div>
+                </div>
+                <div class="panel">
+                    <h2>Countries</h2>
+                    <div class="filter-hint" id="hint-countries"></div>
+                    <table id="country-table" class="data-table">
+                        <thead><tr><th>Country</th><th>Code</th><th>Requests</th><th>%</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="grid-2col">
+                <div class="panel">
+                    <h2>Browsers</h2>
+                    <div class="filter-hint" id="hint-browsers"></div>
+                    <canvas id="browser-chart" height="300"></canvas>
+                </div>
+                <div class="panel">
+                    <h2>Operating Systems</h2>
+                    <div class="filter-hint" id="hint-oses"></div>
+                    <canvas id="os-chart" height="300"></canvas>
+                </div>
+            </section>
+
+            <section class="panel full-width">
+                <h2>Daily Traffic</h2>
+                <div class="filter-hint" id="hint-daily"></div>
+                <canvas id="daily-chart" height="250"></canvas>
+            </section>
+
+            <section class="grid-2col">
+                <div class="panel">
+                    <h2>Status Codes</h2>
+                    <div class="filter-hint" id="hint-status"></div>
+                    <canvas id="status-chart" height="200"></canvas>
+                </div>
+                <div class="panel">
+                    <h2>Top Pages</h2>
+                    <div class="filter-hint" id="hint-pages"></div>
+                    <table id="pages-table" class="data-table">
+                        <thead><tr><th>Page</th><th>Requests</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel full-width">
+                <h2>Top Visitors</h2>
+                <div class="filter-hint" id="hint-visitors"></div>
+                <table id="visitors-table" class="data-table">
+                    <thead><tr><th>IP (anonymized)</th><th>Country</th><th>Requests</th></tr></thead>
                     <tbody></tbody>
                 </table>
-            </div>
-        </section>
+            </section>
+        </div>
 
-        <section class="grid-2col">
+        <div id="tab-events" class="tab-panel hidden">
+            <div class="filter-hint" id="hint-events"></div>
             <div class="panel">
-                <h2>Browsers</h2>
-                <div class="filter-hint" id="hint-browsers"></div>
-                <canvas id="browser-chart" height="300"></canvas>
+                <div class="events-table-wrap">
+                    <table class="data-table events-table" id="events-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Method</th>
+                                <th>Host</th>
+                                <th>URI</th>
+                                <th>Status</th>
+                                <th>Size</th>
+                                <th>Duration</th>
+                                <th>IP</th>
+                                <th>Country</th>
+                                <th>Browser</th>
+                                <th>OS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="events-sentinel"></div>
+                <div id="events-status"></div>
             </div>
-            <div class="panel">
-                <h2>Operating Systems</h2>
-                <div class="filter-hint" id="hint-oses"></div>
-                <canvas id="os-chart" height="300"></canvas>
-            </div>
-        </section>
-
-        <section class="panel full-width">
-            <h2>Daily Traffic</h2>
-            <div class="filter-hint" id="hint-daily"></div>
-            <canvas id="daily-chart" height="250"></canvas>
-        </section>
-
-        <section class="grid-2col">
-            <div class="panel">
-                <h2>Status Codes</h2>
-                <div class="filter-hint" id="hint-status"></div>
-                <canvas id="status-chart" height="200"></canvas>
-            </div>
-            <div class="panel">
-                <h2>Top Pages</h2>
-                <div class="filter-hint" id="hint-pages"></div>
-                <table id="pages-table" class="data-table">
-                    <thead><tr><th>Page</th><th>Requests</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section class="panel full-width">
-            <h2>Top Visitors</h2>
-            <div class="filter-hint" id="hint-visitors"></div>
-            <table id="visitors-table" class="data-table">
-                <thead><tr><th>IP (anonymized)</th><th>Country</th><th>Requests</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </section>
+        </div>
     </main>
 
     <div id="loading" class="hidden">

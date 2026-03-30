@@ -453,6 +453,83 @@ main {
     outline: none;
 }
 
+/* ── Tabs ──────────────────────────────────────────────────────────────────── */
+
+.tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    padding: 0.6rem 1.4rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover {
+    color: var(--green-dark);
+}
+
+.tab-btn.active {
+    color: var(--green-dark);
+    font-weight: 600;
+    border-bottom-color: var(--green-mid);
+}
+
+/* ── Events table ──────────────────────────────────────────────────────────── */
+
+.events-table-wrap {
+    overflow-x: auto;
+}
+
+.events-table {
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.events-table td {
+    padding: 0.3rem 0.6rem;
+}
+
+.events-table td.ts {
+    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+    color: var(--text-light);
+    font-size: 0.75rem;
+}
+
+.events-table td.uri {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, monospace;
+    font-size: 0.75rem;
+}
+
+.events-table tr.error-row td {
+    background: rgba(200, 50, 50, 0.06);
+}
+
+.events-table tr.error-row td.status-err {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+#events-status {
+    text-align: center;
+    padding: 1rem 0 0.25rem;
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
 @media (max-width: 768px) {
     header { flex-direction: column; text-align: center; }
     .upload-zone { min-width: auto; width: 100%; }
