@@ -146,5 +146,68 @@ const Charts = (() => {
         }
     }
 
-    return { renderBarChart, renderVerticalBarChart };
+    /**
+     * Render a D3 donut/pie chart with a legend below.
+     * @param {string} containerId - Container div element ID
+     * @param {string[]} labels - Slice labels
+     * @param {number[]} values - Slice values
+     * @param {number} total - Total for percentage calculation
+     */
+    function renderPieChart(containerId, labels, values, total) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+
+        const PIE_GREENS = [
+            '#1a4d15', '#276120', '#3d7a35', '#4a8c3f',
+            '#5ea854', '#7ab864', '#8bc34a', '#a8d467',
+        ];
+
+        const w = container.clientWidth || 300;
+        const pieD = Math.min(w, 200);
+        const r = pieD / 2 - 4;
+
+        const pie = d3.pie().sort(null).value(d => d);
+        const arc = d3.arc().innerRadius(r * 0.38).outerRadius(r);
+        const arcs = pie(values);
+
+        const svg = d3.select(container)
+            .append('svg')
+            .attr('viewBox', `0 0 ${w} ${pieD}`)
+            .attr('width', '100%')
+            .style('display', 'block');
+
+        const g = svg.append('g')
+            .attr('transform', `translate(${w / 2},${pieD / 2})`);
+
+        g.selectAll('path')
+            .data(arcs)
+            .join('path')
+            .attr('d', arc)
+            .attr('fill', (d, i) => PIE_GREENS[i % PIE_GREENS.length])
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 1.5)
+            .append('title')
+            .text((d, i) => {
+                const pct = total > 0 ? ' (' + ((values[i] / total) * 100).toFixed(1) + '%)' : '';
+                return labels[i] + ': ' + values[i].toLocaleString() + pct;
+            });
+
+        // Legend
+        const legend = document.createElement('div');
+        legend.className = 'pie-legend';
+        for (let i = 0; i < labels.length; i++) {
+            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) + '%' : '';
+            const item = document.createElement('div');
+            item.className = 'pie-legend-item';
+            item.innerHTML =
+                `<span class="pie-legend-swatch" style="background:${PIE_GREENS[i % PIE_GREENS.length]}"></span>` +
+                `<span class="pie-legend-label">${labels[i]}</span>` +
+                `<span class="pie-legend-pct">${pct}</span>`;
+            legend.appendChild(item);
+        }
+        container.appendChild(legend);
+    }
+
+    return { renderBarChart, renderVerticalBarChart, renderPieChart };
 })();

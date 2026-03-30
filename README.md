@@ -6,23 +6,27 @@ A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access log
 
 ## Screenshots
 
-![Summary cards, world map, and country table](doc/screenshot-1.png)
+*Statistics overview*
 
-![Browser, OS, and daily traffic charts](doc/screenshot-2.png)
+![Statistics dashboard — summary cards, world map, browser & OS donut charts, daily traffic, status codes, top pages and visitors](doc/screenshot-statistics.png)
+
+*Single log entries*
+
+![Single Records tab — filter bar with site, status, date, country, browser, OS, and page filters active](doc/screenshot-single-records.png)
 
 ## Features
 
 - **Drag-and-drop upload** of Caddy JSONL access logs — no configuration needed, just drop the file
 - **Summary cards**: total requests, unique IPs, data transferred, and average response time at a glance
 - **World map** with proportional bubbles showing where your visitors come from (requires optional GeoIP database)
-- **Browser & OS statistics** with horizontal bar charts showing user-agent breakdowns
+- **Browser & OS statistics** with interactive D3.js donut charts (green palette) showing user-agent breakdowns
 - **Daily traffic** trend chart to spot spikes and patterns over time
 - **HTTP status code** breakdown — see 2xx, 3xx, 4xx, and 5xx ratios visually
 - **Top pages** listing the most-visited URIs (static assets automatically excluded)
 - **Top visitors** with anonymized IPs and country attribution
 - **Single Events tab** — scroll through raw log entries (most recent first) with lazy loading; 4xx/5xx rows highlighted in red
 - **Multi-host support** — analyze logs containing multiple virtual hosts, with per-host filtering
-- **8-dimension filtering** — filter by site, HTTP status range, date range, country, browser, OS, and page simultaneously; all filters are applied on the backend with AND logic in a single streaming pass
+- **9-dimension filtering** — filter by site, HTTP status range, date range, country, browser, OS, page, and HTTP method simultaneously; all filters are applied on the backend with AND logic in a single streaming pass
 - **Filter hint badges** per panel — each chart and table shows which filters are currently active
 - **GDPR-compliant** IP anonymization: last octet zeroed for IPv4, prefix truncated for IPv6
 - **Offline-first frontend** — D3.js and TopoJSON are served locally, no CDN calls
@@ -116,7 +120,7 @@ See [doc/spec/log-format.md](doc/spec/log-format.md) for the full field specific
 
 CaddyShack is designed around three principles:
 
-- **Filter-then-aggregate** — all filter dimensions (host, date range, country, browser, OS, page, HTTP status) are applied on the backend with AND logic in a single streaming pass before any aggregation. Every filter combination is accurate by construction; no client-side re-aggregation.
+- **Filter-then-aggregate** — all filter dimensions (host, date range, country, browser, OS, page, HTTP status, HTTP method) are applied on the backend with AND logic in a single streaming pass before any aggregation. Every filter combination is accurate by construction; no client-side re-aggregation.
 - **Streaming** — logs are parsed line-by-line with `bufio.Scanner`. Memory usage grows with the number of unique values (IPs, pages, countries), not with the number of log lines.
 - **No frameworks** — pure Go standard library (`net/http`) on the backend, vanilla HTML/CSS/JavaScript on the frontend. No external Go dependencies; deployment is a single binary.
 

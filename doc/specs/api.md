@@ -38,6 +38,7 @@ ANDed before aggregation.
 | `os` | OS name (exact match, e.g. `macOS`). |
 | `page` | Exact URI (e.g. `/blog/post-1`). |
 | `status` | `success` (2xx) or `error` (4xx+). Omit for all. |
+| `method` | HTTP method exact match (e.g. `GET`, `POST`). Omit for all. |
 
 **Response** `200 OK` — `AnalysisResult` (no `file_id` in this response)
 **Error** `400 Bad Request` — missing or invalid params
@@ -98,7 +99,8 @@ except the host filter, so the list reflects what can usefully be selected.
   "operating_systems": [{ "name": "macOS", "count": 3 }],
   "daily_traffic": [{ "date": "2026-03-29", "count": 8 }],
   "top_visitors":  [{ "ip": "93.184.216.0", "count": 2, "country": "US", "country_name": "United States" }],
-  "countries":     [{ "code": "US", "name": "United States", "count": 4 }]
+  "countries":     [{ "code": "US", "name": "United States", "count": 4 }],
+  "methods":       [{ "name": "GET", "count": 6 }]
 }
 ```
 
@@ -117,3 +119,4 @@ except the host filter, so the list reflects what can usefully be selected.
 | `daily_traffic` | DayCount[] | all | Sorted chronologically |
 | `top_visitors` | VisitorInfo[] | 10 | Anonymized IPs |
 | `countries` | CountryCount[] | 15 | Sorted descending |
+| `methods` | NameCount[] | 20 | Sorted descending |

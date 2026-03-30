@@ -69,9 +69,15 @@
                 </select>
             </div>
             <div class="filter-group">
-                <label class="filter-label">Page</label>
+                <label class="filter-label">URI</label>
                 <select id="page-filter" class="dim-filter-select">
-                    <option value="">All Pages</option>
+                    <option value="">All URIs</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">HTTP Method</label>
+                <select id="method-filter" class="dim-filter-select">
+                    <option value="">All Methods</option>
                 </select>
             </div>
         </div>
@@ -124,12 +130,12 @@
                 <div class="panel">
                     <h2>Browsers</h2>
                     <div class="filter-hint" id="hint-browsers"></div>
-                    <canvas id="browser-chart" height="300"></canvas>
+                    <div id="browser-chart"></div>
                 </div>
                 <div class="panel">
                     <h2>Operating Systems</h2>
                     <div class="filter-hint" id="hint-oses"></div>
-                    <canvas id="os-chart" height="300"></canvas>
+                    <div id="os-chart"></div>
                 </div>
             </section>
 
@@ -146,10 +152,10 @@
                     <canvas id="status-chart" height="200"></canvas>
                 </div>
                 <div class="panel">
-                    <h2>Top Pages</h2>
+                    <h2>Top URIs</h2>
                     <div class="filter-hint" id="hint-pages"></div>
                     <table id="pages-table" class="data-table">
-                        <thead><tr><th>Page</th><th>Requests</th></tr></thead>
+                        <thead><tr><th>URI</th><th>Requests</th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>

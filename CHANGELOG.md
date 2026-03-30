@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- HTTP Method filter: dropdown in the filter bar lets users scope the entire dashboard to a specific HTTP verb (GET, POST, HEAD, etc.); options auto-populate from methods present in the log; filter applies to both `/api/analyze` and `/api/events`
 - Single Events tab: browse raw log entries (most recent first) with lazy loading — 100 events per page, more load automatically on scroll via IntersectionObserver
 - `GET /api/events` endpoint: same filter params as `/api/analyze`, returns paginated `EventsResult` with enriched `EventEntry` rows (timestamp ISO 8601, method, host, URI, status, size, duration, anonymized IP, country, browser, OS)
 - Per-panel filter hint badges showing all active filters (site, HTTP status range, date, country, browser, OS, page); panels with no active filter display "all data"
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replace Browsers and Operating Systems bar charts with D3.js donut charts; slices use eight distinguishable shades of green with a compact legend showing name and percentage; fixes layout overflow at medium viewport widths where canvas value labels broke out of their panels
 - Dashboard split into tabbed layout: Statistics (all existing panels) and Single events
 - 4xx/5xx event rows highlighted in red in the Single Events table
 - `POST /api/upload` now saves the file to temp storage and returns `file_id` alongside the initial analysis result

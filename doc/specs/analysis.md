@@ -21,6 +21,7 @@ type FilterParams struct {
     OS        string // OS name exact match, "" = all
     Page      string // exact URI match, "" = all
     Status    string // "success" | "error", "" = all
+    Method    string // HTTP method exact match e.g. "GET", "" = all
 }
 ```
 
@@ -49,6 +50,7 @@ For each log entry:
 | `ips` | Anonymized IP | |
 | `daily` | YYYY-MM-DD | |
 | `countryCounts` | ISO 3166-1 alpha-2 code | |
+| `methods` | HTTP method string | Empty methods excluded |
 
 ## Report Structure
 
@@ -73,6 +75,7 @@ graph TD
 | `daily_traffic` | DayCount[] | all | Sorted chronologically |
 | `top_visitors` | VisitorInfo[] | 10 | Sorted descending by count |
 | `countries` | CountryCount[] | 15 | Sorted descending by count |
+| `methods` | NameCount[] | 20 | Sorted descending by count |
 
 ### Nested Types
 
@@ -119,5 +122,5 @@ A URI is counted as a page only if **all** of the following hold:
 | `"success"` | 200–299 |
 | `"error"` | 400–599 |
 
-All other filter dimensions (host, date range, country, browser, OS, page) are
+All other filter dimensions (host, date range, country, browser, OS, page, method) are
 applied in the same pass via `passesNonHostFilters`.

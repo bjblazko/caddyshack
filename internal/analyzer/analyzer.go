@@ -26,6 +26,7 @@ type FilterParams struct {
 	OS        string // OS name, "" = all
 	Page      string // exact URI, "" = all
 	Status    string // "success" | "error", "" = all
+	Method    string // HTTP method e.g. "GET", "" = all
 }
 
 type NameCount struct {
@@ -63,6 +64,7 @@ type Report struct {
 	DailyTraffic     []DayCount     `json:"daily_traffic"`
 	TopVisitors      []VisitorInfo  `json:"top_visitors"`
 	Countries        []CountryCount `json:"countries"`
+	Methods          []NameCount    `json:"methods"`
 }
 
 // AnalysisResult is the top-level response from Analyze.
@@ -108,6 +110,7 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 	ips := make(map[string]int)
 	daily := make(map[string]int)
 	countryCounts := make(map[string]int)
+	methods := make(map[string]int)
 	hostSeen := make(map[string]bool)
 
 	var totalRequests int
@@ -136,7 +139,7 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 
 		// Collect hosts from entries passing every filter except host,
 		// so the host dropdown stays meaningful under all other filters.
-		if passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, params) {
+		if passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, params) {
 			if req.Host != "" {
 				hostSeen[req.Host] = true
 			}
@@ -146,7 +149,7 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 		if params.Host != "" && req.Host != params.Host {
 			return
 		}
-		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, params) {
+		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, params) {
 			return
 		}
 
@@ -161,6 +164,9 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 		statusCodes[entry.Status]++
 		daily[day]++
 		countryCounts[countryCode]++
+		if req.Method != "" {
+			methods[req.Method]++
+		}
 
 		// Count non-asset pages: for error-scoped queries include error responses,
 		// otherwise include only non-error responses (preserving historic behaviour).
@@ -194,13 +200,14 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 			DailyTraffic:     sortedDays(daily),
 			TopVisitors:      topVisitors(ips, 10),
 			Countries:        topCountries(countryCounts, 15),
+			Methods:          topN(methods, 20),
 		},
 	}
 }
 
 // passesNonHostFilters returns true if the entry satisfies every active filter
 // except the host filter.
-func passesNonHostFilters(day string, status int, browser, osName, countryName, uri string, p FilterParams) bool {
+func passesNonHostFilters(day string, status int, browser, osName, countryName, uri, method string, p FilterParams) bool {
 	if p.StartDate != "" && day < p.StartDate {
 		return false
 	}
@@ -223,6 +230,9 @@ func passesNonHostFilters(day string, status int, browser, osName, countryName, 
 		return false
 	}
 	if p.Page != "" && uri != p.Page {
+		return false
+	}
+	if p.Method != "" && method != p.Method {
 		return false
 	}
 	return true
@@ -355,7 +365,7 @@ func ListEvents(r io.Reader, params FilterParams, offset, limit int) *EventsResu
 		if params.Host != "" && req.Host != params.Host {
 			return
 		}
-		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, params) {
+		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, params) {
 			return
 		}
 

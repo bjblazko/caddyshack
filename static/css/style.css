@@ -530,6 +530,37 @@ main {
     color: var(--text-light);
 }
 
+/* ── Pie chart legend ──────────────────────────────────────────────────────── */
+
+.pie-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.9rem;
+    margin-top: 0.75rem;
+    font-size: 0.78rem;
+}
+
+.pie-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.pie-legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.pie-legend-label {
+    color: var(--text);
+}
+
+.pie-legend-pct {
+    color: var(--text-light);
+}
+
 @media (max-width: 768px) {
     header { flex-direction: column; text-align: center; }
     .upload-zone { min-width: auto; width: 100%; }

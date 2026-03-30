@@ -55,6 +55,7 @@ func Events(w http.ResponseWriter, r *http.Request) {
 		OS:        q.Get("os"),
 		Page:      q.Get("page"),
 		Status:    q.Get("status"),
+		Method:    q.Get("method"),
 	}
 
 	offset, _ := strconv.Atoi(q.Get("offset"))

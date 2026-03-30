@@ -24,6 +24,7 @@
     let currentBrowser   = null;
     let currentOS        = null;
     let currentPage      = null;
+    let currentMethod    = null;
 
     let dateDebounceTimer = null;
 
@@ -149,6 +150,7 @@
         if (currentBrowser)   p.set('browser', currentBrowser);
         if (currentOS)        p.set('os',      currentOS);
         if (currentPage)      p.set('page',    currentPage);
+        if (currentMethod)    p.set('method',  currentMethod);
         return p;
     }
 
@@ -192,6 +194,7 @@
         currentBrowser   = null;
         currentOS        = null;
         currentPage      = null;
+        currentMethod    = null;
 
         hostSelect.value = '';
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -202,6 +205,7 @@
         document.getElementById('browser-filter').value = '';
         document.getElementById('os-filter').value      = '';
         document.getElementById('page-filter').value    = '';
+        document.getElementById('method-filter').value  = '';
 
         eventsOffset  = 0;
         eventsTotal   = 0;
@@ -223,14 +227,14 @@
         document.getElementById('avg-response').textContent   = ((data.avg_response_ms || 0).toFixed(1)) + ' ms';
 
         if (data.browsers && data.browsers.length > 0) {
-            Charts.renderBarChart('browser-chart',
+            Charts.renderPieChart('browser-chart',
                 data.browsers.map(b => b.name), data.browsers.map(b => b.count),
-                data.total_requests, '#4a8c3f');
+                data.total_requests);
         }
         if (data.operating_systems && data.operating_systems.length > 0) {
-            Charts.renderBarChart('os-chart',
+            Charts.renderPieChart('os-chart',
                 data.operating_systems.map(o => o.name), data.operating_systems.map(o => o.count),
-                data.total_requests, '#2d5a27');
+                data.total_requests);
         }
         if (data.status_codes && data.status_codes.length > 0) {
             Charts.renderBarChart('status-chart',
@@ -328,6 +332,8 @@
             () => { currentOS = null; });
         rebuildDimSelect('page-filter', (report.top_pages || []).map(p => p.name),
             () => { currentPage = null; }, 45);
+        rebuildDimSelect('method-filter', (report.methods || []).map(m => m.name),
+            () => { currentMethod = null; });
     }
 
     function rebuildDimSelect(id, values, resetFn, truncateLen) {
@@ -369,6 +375,11 @@
         currentPage = this.value || null;
         doFetch();
     });
+    document.getElementById('method-filter').addEventListener('change', function () {
+        if (!fileRef) return;
+        currentMethod = this.value || null;
+        doFetch();
+    });
 
     // ── Filter hints ──────────────────────────────────────────────────────────
 
@@ -384,7 +395,7 @@
             : currentStatus === 'error' ? 'Errors (4xx–5xx)' : null;
 
         const allTags = [currentHost || null, statusLabel, date, currentCountry,
-                         currentBrowser, currentOS, pageLabel]
+                         currentBrowser, currentOS, pageLabel, currentMethod]
             .filter(Boolean);
 
         for (const id of ['hint-cards', 'hint-daily', 'hint-map', 'hint-countries',

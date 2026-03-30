@@ -3,8 +3,9 @@
 ## Technology
 
 - Vanilla HTML5, CSS3, JavaScript (ES2020+) — no framework, no build step, no npm
-- Canvas 2D API for bar charts
-- D3.js v7 + topojson-client v3 for the world map (served locally, no CDN)
+- Canvas 2D API for bar charts (daily traffic, status codes)
+- D3.js v7 for the world map and browser/OS donut charts (served locally, no CDN)
+- topojson-client v3 for country boundary rendering (served locally, no CDN)
 - Natural Earth 110m TopoJSON for country boundaries
 
 ## Dashboard Layout
@@ -14,10 +15,10 @@ Single-page application (`index.html`). All sections hidden until a log file is 
 ### Sections (top to bottom)
 
 1. **Header** — logo, title, subtitle, drag-and-drop upload zone
-2. **Filter bar** — host dropdown, Success/Error/All toggle, date range inputs, Country/Browser/OS/Page dropdowns
+2. **Filter bar** — host dropdown, Success/Error/All toggle, date range inputs, Country/Browser/OS/Page/Method dropdowns
 3. **Summary Cards** (4-column desktop / 2-column mobile) — total requests, unique IPs, data transferred, avg response time
 4. **World Map + Countries** (2-column) — D3 bubble map left, country table right
-5. **Browsers + Operating Systems** (2-column) — horizontal bar charts on `<canvas>`
+5. **Browsers + Operating Systems** (2-column) — D3.js donut charts with green-palette slices and a percentage legend
 6. **Daily Traffic** (full-width) — vertical bar chart on `<canvas>`
 7. **Status Codes + Top Pages** (2-column) — bar chart and table
 8. **Top Visitors** (full-width) — table with anonymized IPs, country, count
@@ -44,12 +45,13 @@ All filter controls are rendered in a single `.filter-bar` row above the summary
 | Browser | `<select id="browser-filter" class="dim-filter-select">` | `currentBrowser` | Browser name exact match |
 | OS | `<select id="os-filter" class="dim-filter-select">` | `currentOS` | OS name exact match |
 | Page | `<select id="page-filter" class="dim-filter-select">` | `currentPage` | URI exact match |
+| HTTP Method | `<select id="method-filter" class="dim-filter-select">` | `currentMethod` | HTTP method exact match (e.g. `GET`, `POST`) |
 
 Every filter change triggers `doFetch()`, which sends all active filter params to `GET /api/analyze` and re-renders the entire dashboard from the backend response. Date inputs use a 400ms debounce (`scheduleFetch`) to avoid rapid requests while typing.
 
 ### Dimension Dropdown Repopulation
 
-After each `GET /api/analyze` response, `populateDimensionDropdowns(report)` rebuilds the four dimension selects from the returned report's `countries`, `browsers`, `operating_systems`, and `top_pages` arrays. These arrays already reflect the current host, status, and date filters, so the dimension dropdowns never show stale or out-of-range values. If the previously selected value is no longer present, the dropdown resets to "All" and the state variable is cleared.
+After each `GET /api/analyze` response, `populateDimensionDropdowns(report)` rebuilds the dimension selects from the returned report's `countries`, `browsers`, `operating_systems`, `top_pages`, and `methods` arrays. These arrays already reflect the current host, status, and date filters, so the dimension dropdowns never show stale or out-of-range values. If the previously selected value is no longer present, the dropdown resets to "All" and the state variable is cleared.
 
 ## Filter Hints
 
@@ -79,6 +81,7 @@ No client-side re-aggregation is performed. The backend always returns a fully a
 
 - `Charts.renderBarChart(canvasId, labels, values, total, color)` — horizontal bar chart with percentage labels; DPR-scaled for Retina displays
 - `Charts.renderVerticalBarChart(canvasId, labels, values)` — vertical bar chart with Y-axis gridlines and rotated date labels; DPR-scaled
+- `Charts.renderPieChart(containerId, labels, values, total)` — D3.js donut chart rendered into a `<div>`; slices use eight shades of green (`#1a4d15` → `#a8d467`); native `<title>` tooltip on each slice; percentage legend rendered below as flex-wrapped pills
 
 ### `map.js` — `WorldMap` namespace
 

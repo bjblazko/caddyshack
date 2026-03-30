@@ -104,11 +104,12 @@ func Analyze(w http.ResponseWriter, r *http.Request) {
 		OS:        q.Get("os"),
 		Page:      q.Get("page"),
 		Status:    q.Get("status"),
+		Method:    q.Get("method"),
 	}
 
-	log.Printf("Analyzing %s (host=%q start=%q end=%q country=%q browser=%q os=%q page=%q status=%q)",
+	log.Printf("Analyzing %s (host=%q start=%q end=%q country=%q browser=%q os=%q page=%q status=%q method=%q)",
 		filePath, params.Host, params.StartDate, params.EndDate,
-		params.Country, params.Browser, params.OS, params.Page, params.Status)
+		params.Country, params.Browser, params.OS, params.Page, params.Status, params.Method)
 
 	result := analyzer.Analyze(f, params)
 
