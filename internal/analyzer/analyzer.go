@@ -18,15 +18,18 @@ var assetExtensions = []string{".css", ".js", ".png", ".jpg", ".svg", ".ttf", ".
 // FilterParams holds all filter criteria applied before aggregation.
 // All conditions are ANDed. Empty/zero values mean "no filter" for that dimension.
 type FilterParams struct {
-	Host      string // virtual host, "" = all
-	StartDate string // "YYYY-MM-DD", "" = unbounded
-	EndDate   string // "YYYY-MM-DD", "" = unbounded
-	Country   string // country name, "" = all
-	Browser   string // browser name, "" = all
-	OS        string // OS name, "" = all
-	Page      string // exact URI, "" = all
-	Status    string // "success" | "error", "" = all
-	Method    string // HTTP method e.g. "GET", "" = all
+	Host         string // virtual host, "" = all
+	StartDate    string // "YYYY-MM-DD", "" = unbounded
+	EndDate      string // "YYYY-MM-DD", "" = unbounded
+	Country      string // country name, "" = all
+	Browser      string // browser name, "" = all
+	OS           string // OS name, "" = all
+	Page         string // exact URI, "" = all
+	Status       string // "success" | "error", "" = all
+	Method       string // HTTP method e.g. "GET", "" = all
+	IgnoreStatic bool   // exclude JS, CSS, fonts, robots.txt, etc.
+	IgnoreImages bool   // exclude PNG, JPG, SVG, ICO, etc.
+	Search       string // glob pattern matched against URI, client IP, and Referer; "" = no filter
 }
 
 type NameCount struct {
@@ -65,6 +68,7 @@ type Report struct {
 	TopVisitors      []VisitorInfo  `json:"top_visitors"`
 	Countries        []CountryCount `json:"countries"`
 	Methods          []NameCount    `json:"methods"`
+	TopReferrers     []NameCount    `json:"top_referrers"`
 }
 
 // AnalysisResult is the top-level response from Analyze.
@@ -88,6 +92,7 @@ type EventEntry struct {
 	CountryName string  `json:"country_name"`
 	Browser     string  `json:"browser"`
 	OS          string  `json:"os"`
+	Referer     string  `json:"referer"`
 }
 
 // EventsResult is the paginated response from ListEvents.
@@ -111,6 +116,7 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 	daily := make(map[string]int)
 	countryCounts := make(map[string]int)
 	methods := make(map[string]int)
+	referrers := make(map[string]int)
 	hostSeen := make(map[string]bool)
 
 	var totalRequests int
@@ -134,12 +140,17 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 		}
 		browser, osName := useragent.Parse(ua)
 
+		referer := ""
+		if refs, ok := req.Headers["Referer"]; ok && len(refs) > 0 {
+			referer = refs[0]
+		}
+
 		countryCode := geoip.Lookup(clientIP)
 		countryName := geoip.CountryName(countryCode)
 
 		// Collect hosts from entries passing every filter except host,
 		// so the host dropdown stays meaningful under all other filters.
-		if passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, params) {
+		if passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, clientIP, referer, params) {
 			if req.Host != "" {
 				hostSeen[req.Host] = true
 			}
@@ -149,7 +160,7 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 		if params.Host != "" && req.Host != params.Host {
 			return
 		}
-		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, params) {
+		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, clientIP, referer, params) {
 			return
 		}
 
@@ -166,6 +177,9 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 		countryCounts[countryCode]++
 		if req.Method != "" {
 			methods[req.Method]++
+		}
+		if referer != "" {
+			referrers[referer]++
 		}
 
 		// Count non-asset pages: for error-scoped queries include error responses,
@@ -201,13 +215,14 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 			TopVisitors:      topVisitors(ips, 10),
 			Countries:        topCountries(countryCounts, 15),
 			Methods:          topN(methods, 20),
+			TopReferrers:     topN(referrers, 10),
 		},
 	}
 }
 
 // passesNonHostFilters returns true if the entry satisfies every active filter
 // except the host filter.
-func passesNonHostFilters(day string, status int, browser, osName, countryName, uri, method string, p FilterParams) bool {
+func passesNonHostFilters(day string, status int, browser, osName, countryName, uri, method, clientIP, referer string, p FilterParams) bool {
 	if p.StartDate != "" && day < p.StartDate {
 		return false
 	}
@@ -235,6 +250,17 @@ func passesNonHostFilters(day string, status int, browser, osName, countryName, 
 	if p.Method != "" && method != p.Method {
 		return false
 	}
+	if p.IgnoreStatic && isStaticResource(uri) {
+		return false
+	}
+	if p.IgnoreImages && isImageResource(uri) {
+		return false
+	}
+	if p.Search != "" {
+		if !matchGlob(p.Search, uri) && !matchGlob(p.Search, clientIP) && !matchGlob(p.Search, referer) {
+			return false
+		}
+	}
 	return true
 }
 
@@ -246,6 +272,96 @@ func isAsset(uri string) bool {
 	}
 	for _, e := range assetExtensions {
 		if strings.HasSuffix(uri, e) {
+			return true
+		}
+	}
+	return false
+}
+
+// matchGlob matches pattern against text case-insensitively using * as a
+// multi-character wildcard. No * means an exact (literal) match is required.
+// Multiple * are supported; a leading/trailing non-empty segment is anchored
+// to the start/end of text.
+func matchGlob(pattern, text string) bool {
+	p := strings.ToLower(pattern)
+	t := strings.ToLower(text)
+	if !strings.Contains(p, "*") {
+		return p == t
+	}
+	parts := strings.Split(p, "*")
+	// Leading non-empty segment must match as a prefix.
+	if parts[0] != "" {
+		if !strings.HasPrefix(t, parts[0]) {
+			return false
+		}
+		t = t[len(parts[0]):]
+	}
+	// Trailing non-empty segment must match as a suffix.
+	last := parts[len(parts)-1]
+	if last != "" {
+		if !strings.HasSuffix(t, last) {
+			return false
+		}
+		t = t[:len(t)-len(last)]
+	}
+	// Middle segments must appear in order within the remaining text.
+	for _, seg := range parts[1 : len(parts)-1] {
+		if seg == "" {
+			continue
+		}
+		idx := strings.Index(t, seg)
+		if idx == -1 {
+			return false
+		}
+		t = t[idx+len(seg):]
+	}
+	return true
+}
+
+// uriPath strips the query string from a URI for extension matching.
+func uriPath(uri string) string {
+	if i := strings.IndexByte(uri, '?'); i >= 0 {
+		return uri[:i]
+	}
+	return uri
+}
+
+var staticExtensions = []string{".css", ".js", ".map", ".woff", ".woff2", ".ttf", ".eot", ".otf"}
+var staticPrefixes   = []string{"/css/", "/js/", "/fonts/"}
+var staticFiles      = []string{"robots.txt", "sitemap.xml"}
+
+func isStaticResource(uri string) bool {
+	p := uriPath(uri)
+	for _, px := range staticPrefixes {
+		if strings.HasPrefix(p, px) {
+			return true
+		}
+	}
+	for _, e := range staticExtensions {
+		if strings.HasSuffix(p, e) {
+			return true
+		}
+	}
+	for _, f := range staticFiles {
+		if strings.HasSuffix(p, "/"+f) || p == "/"+f {
+			return true
+		}
+	}
+	return false
+}
+
+var imageExtensions = []string{".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico", ".bmp", ".avif"}
+var imagePrefixes   = []string{"/img/", "/images/"}
+
+func isImageResource(uri string) bool {
+	p := uriPath(uri)
+	for _, px := range imagePrefixes {
+		if strings.HasPrefix(p, px) {
+			return true
+		}
+	}
+	for _, e := range imageExtensions {
+		if strings.HasSuffix(p, e) {
 			return true
 		}
 	}
@@ -359,13 +475,18 @@ func ListEvents(r io.Reader, params FilterParams, offset, limit int) *EventsResu
 		}
 		browser, osName := useragent.Parse(ua)
 
+		referer := ""
+		if refs, ok := req.Headers["Referer"]; ok && len(refs) > 0 {
+			referer = refs[0]
+		}
+
 		countryCode := geoip.Lookup(clientIP)
 		countryName := geoip.CountryName(countryCode)
 
 		if params.Host != "" && req.Host != params.Host {
 			return
 		}
-		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, params) {
+		if !passesNonHostFilters(day, entry.Status, browser, osName, countryName, req.URI, req.Method, clientIP, referer, params) {
 			return
 		}
 
@@ -384,6 +505,7 @@ func ListEvents(r io.Reader, params FilterParams, offset, limit int) *EventsResu
 				CountryName: countryName,
 				Browser:     browser,
 				OS:          osName,
+				Referer:     referer,
 			},
 		})
 	})

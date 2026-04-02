@@ -24,9 +24,10 @@ A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access log
 - **HTTP status code** breakdown — see 2xx, 3xx, 4xx, and 5xx ratios visually
 - **Top pages** listing the most-visited URIs (static assets automatically excluded)
 - **Top visitors** with anonymized IPs and country attribution
-- **Single Events tab** — scroll through raw log entries (most recent first) with lazy loading; 4xx/5xx rows highlighted in red
+- **Top referrers** — the 10 most frequent HTTP Referer values with request counts
+- **Single Events tab** — scroll through raw log entries (most recent first) with lazy loading; 4xx/5xx rows highlighted in red; includes Referrer column
 - **Multi-host support** — analyze logs containing multiple virtual hosts, with per-host filtering
-- **9-dimension filtering** — filter by site, HTTP status range, date range, country, browser, OS, page, and HTTP method simultaneously; all filters are applied on the backend with AND logic in a single streaming pass
+- **11-dimension filtering** — filter by site, HTTP status range, date range, country, browser, OS, page, HTTP method, glob search (URI/IP/referrer), and optionally exclude static files or images; all filters applied on the backend with AND logic in a single streaming pass
 - **Filter hint badges** per panel — each chart and table shows which filters are currently active
 - **GDPR-compliant** IP anonymization: last octet zeroed for IPv4, prefix truncated for IPv6
 - **Offline-first frontend** — D3.js and TopoJSON are served locally, no CDN calls
@@ -120,7 +121,7 @@ See [doc/spec/log-format.md](doc/spec/log-format.md) for the full field specific
 
 CaddyShack is designed around three principles:
 
-- **Filter-then-aggregate** — all filter dimensions (host, date range, country, browser, OS, page, HTTP status, HTTP method) are applied on the backend with AND logic in a single streaming pass before any aggregation. Every filter combination is accurate by construction; no client-side re-aggregation.
+- **Filter-then-aggregate** — all filter dimensions (host, date range, country, browser, OS, page, HTTP status, HTTP method, glob search, static/image exclusion) are applied on the backend with AND logic in a single streaming pass before any aggregation. Every filter combination is accurate by construction; no client-side re-aggregation.
 - **Streaming** — logs are parsed line-by-line with `bufio.Scanner`. Memory usage grows with the number of unique values (IPs, pages, countries), not with the number of log lines.
 - **No frameworks** — pure Go standard library (`net/http`) on the backend, vanilla HTML/CSS/JavaScript on the frontend. No external Go dependencies; deployment is a single binary.
 

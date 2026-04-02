@@ -96,15 +96,18 @@ func Analyze(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 
 	params := analyzer.FilterParams{
-		Host:      q.Get("host"),
-		StartDate: q.Get("start"),
-		EndDate:   q.Get("end"),
-		Country:   q.Get("country"),
-		Browser:   q.Get("browser"),
-		OS:        q.Get("os"),
-		Page:      q.Get("page"),
-		Status:    q.Get("status"),
-		Method:    q.Get("method"),
+		Host:         q.Get("host"),
+		StartDate:    q.Get("start"),
+		EndDate:      q.Get("end"),
+		Country:      q.Get("country"),
+		Browser:      q.Get("browser"),
+		OS:           q.Get("os"),
+		Page:         q.Get("page"),
+		Status:       q.Get("status"),
+		Method:       q.Get("method"),
+		IgnoreStatic: q.Get("ignore_static") == "1",
+		IgnoreImages: q.Get("ignore_images") == "1",
+		Search:       q.Get("search"),
 	}
 
 	log.Printf("Analyzing %s (host=%q start=%q end=%q country=%q browser=%q os=%q page=%q status=%q method=%q)",

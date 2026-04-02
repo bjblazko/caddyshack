@@ -13,15 +13,17 @@ Empty/zero values mean "no filter" for that dimension.
 
 ```go
 type FilterParams struct {
-    Host      string // virtual host exact match, "" = all
-    StartDate string // "YYYY-MM-DD" inclusive lower bound, "" = unbounded
-    EndDate   string // "YYYY-MM-DD" inclusive upper bound, "" = unbounded
-    Country   string // country name exact match, "" = all
-    Browser   string // browser name exact match, "" = all
-    OS        string // OS name exact match, "" = all
-    Page      string // exact URI match, "" = all
-    Status    string // "success" | "error", "" = all
-    Method    string // HTTP method exact match e.g. "GET", "" = all
+    Host         string // virtual host exact match, "" = all
+    StartDate    string // "YYYY-MM-DD" inclusive lower bound, "" = unbounded
+    EndDate      string // "YYYY-MM-DD" inclusive upper bound, "" = unbounded
+    Country      string // country name exact match, "" = all
+    Browser      string // browser name exact match, "" = all
+    OS           string // OS name exact match, "" = all
+    Page         string // exact URI match, "" = all
+    Status       string // "success" | "error", "" = all
+    Method       string // HTTP method exact match e.g. "GET", "" = all
+    IgnoreStatic bool   // exclude JS, CSS, fonts, robots.txt, sitemap.xml, etc.
+    IgnoreImages bool   // exclude PNG, JPG, JPEG, GIF, SVG, WebP, ICO, BMP, AVIF, etc.
 }
 ```
 
@@ -122,5 +124,20 @@ A URI is counted as a page only if **all** of the following hold:
 | `"success"` | 200–299 |
 | `"error"` | 400–599 |
 
-All other filter dimensions (host, date range, country, browser, OS, page, method) are
-applied in the same pass via `passesNonHostFilters`.
+All other filter dimensions (host, date range, country, browser, OS, page, method,
+`IgnoreStatic`, `IgnoreImages`) are applied in the same pass via `passesNonHostFilters`.
+
+## Static & Image Resource Classification
+
+When `IgnoreStatic` is true, entries whose URI matches a static resource are excluded
+entirely (not just from `top_pages`). A URI is a static resource if it:
+- Has a prefix in `/css/`, `/js/`, `/fonts/`
+- Has an extension in `.css`, `.js`, `.map`, `.woff`, `.woff2`, `.ttf`, `.eot`, `.otf`
+- Ends with `robots.txt` or `sitemap.xml`
+
+When `IgnoreImages` is true, entries whose URI matches an image resource are excluded.
+A URI is an image resource if it:
+- Has a prefix in `/img/`, `/images/`
+- Has an extension in `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.webp`, `.ico`, `.bmp`, `.avif`
+
+Query strings are stripped before extension matching (e.g. `/logo.png?v=3` → `.png`).

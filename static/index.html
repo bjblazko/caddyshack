@@ -80,6 +80,22 @@
                     <option value="">All Methods</option>
                 </select>
             </div>
+            <div class="filter-group">
+                <label class="filter-label" for="search-filter">Search</label>
+                <input type="text" id="search-filter" class="search-filter-input"
+                       placeholder="URI, IP or referrer…">
+            </div>
+            <div class="filter-group filter-group--checks">
+                <label class="filter-label">Exclude</label>
+                <div class="check-filters">
+                    <label class="check-filter">
+                        <input type="checkbox" id="ignore-static"> Static files
+                    </label>
+                    <label class="check-filter">
+                        <input type="checkbox" id="ignore-images"> Images
+                    </label>
+                </div>
+            </div>
         </div>
 
         <div class="tab-bar">
@@ -169,6 +185,15 @@
                     <tbody></tbody>
                 </table>
             </section>
+
+            <section class="panel full-width">
+                <h2>Top Referrers</h2>
+                <div class="filter-hint" id="hint-referrers"></div>
+                <table id="referrers-table" class="data-table">
+                    <thead><tr><th>Referrer</th><th>Requests</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </section>
         </div>
 
         <div id="tab-events" class="tab-panel hidden">
@@ -189,6 +214,7 @@
                                 <th>Country</th>
                                 <th>Browser</th>
                                 <th>OS</th>
+                                <th>Referrer</th>
                             </tr>
                         </thead>
                         <tbody id="events-tbody"></tbody>

@@ -25,6 +25,9 @@
     let currentOS        = null;
     let currentPage      = null;
     let currentMethod    = null;
+    let currentSearch    = '';
+    let ignoreStatic     = false;
+    let ignoreImages     = false;
 
     let dateDebounceTimer = null;
 
@@ -150,7 +153,10 @@
         if (currentBrowser)   p.set('browser', currentBrowser);
         if (currentOS)        p.set('os',      currentOS);
         if (currentPage)      p.set('page',    currentPage);
-        if (currentMethod)    p.set('method',  currentMethod);
+        if (currentMethod)         p.set('method',  currentMethod);
+        if (currentSearch.trim())  p.set('search',  currentSearch.trim());
+        if (ignoreStatic)          p.set('ignore_static', '1');
+        if (ignoreImages)     p.set('ignore_images',  '1');
         return p;
     }
 
@@ -195,6 +201,9 @@
         currentOS        = null;
         currentPage      = null;
         currentMethod    = null;
+        currentSearch    = '';
+        ignoreStatic     = false;
+        ignoreImages     = false;
 
         hostSelect.value = '';
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -206,6 +215,9 @@
         document.getElementById('os-filter').value      = '';
         document.getElementById('page-filter').value    = '';
         document.getElementById('method-filter').value  = '';
+        document.getElementById('search-filter').value  = '';
+        document.getElementById('ignore-static').checked = false;
+        document.getElementById('ignore-images').checked  = false;
 
         eventsOffset  = 0;
         eventsTotal   = 0;
@@ -260,6 +272,9 @@
         ]);
         renderTable('visitors-table', data.top_visitors || [], v => [
             v.ip, v.country_name + ' (' + v.country + ')', v.count.toLocaleString()
+        ]);
+        renderTable('referrers-table', data.top_referrers || [], r => [
+            truncate(r.name, 60, r.name), (r.count || 0).toLocaleString()
         ]);
 
         populateDimensionDropdowns(data);
@@ -380,6 +395,21 @@
         currentMethod = this.value || null;
         doFetch();
     });
+    document.getElementById('search-filter').addEventListener('input', function () {
+        if (!fileRef) return;
+        currentSearch = this.value;
+        scheduleFetch();
+    });
+    document.getElementById('ignore-static').addEventListener('change', function () {
+        if (!fileRef) return;
+        ignoreStatic = this.checked;
+        doFetch();
+    });
+    document.getElementById('ignore-images').addEventListener('change', function () {
+        if (!fileRef) return;
+        ignoreImages = this.checked;
+        doFetch();
+    });
 
     // ── Filter hints ──────────────────────────────────────────────────────────
 
@@ -395,12 +425,15 @@
             : currentStatus === 'error' ? 'Errors (4xx–5xx)' : null;
 
         const allTags = [currentHost || null, statusLabel, date, currentCountry,
-                         currentBrowser, currentOS, pageLabel, currentMethod]
+                         currentBrowser, currentOS, pageLabel, currentMethod,
+                         currentSearch.trim() || null,
+                         ignoreStatic ? 'No static files' : null,
+                         ignoreImages  ? 'No images'       : null]
             .filter(Boolean);
 
         for (const id of ['hint-cards', 'hint-daily', 'hint-map', 'hint-countries',
                           'hint-browsers', 'hint-oses', 'hint-status', 'hint-pages',
-                          'hint-visitors', 'hint-events']) {
+                          'hint-visitors', 'hint-referrers', 'hint-events']) {
             setHint(id, allTags);
         }
     }
@@ -489,6 +522,7 @@
                 { text: ev.country_name || ev.country },
                 { text: ev.browser },
                 { text: ev.os },
+                { text: ev.referer || '', cls: 'uri', title: ev.referer || '' },
             ];
 
             for (const c of cells) {

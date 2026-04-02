@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Static file exclusion filter: "Static files" checkbox hides JS, CSS, fonts, `robots.txt`, and `sitemap.xml` requests from all statistics and the Single Events view
+- Image exclusion filter: "Images" checkbox hides PNG, JPG, SVG, WebP, ICO, and other image requests from all statistics and the Single Events view
+- Search filter: glob-pattern text input matches URI, source IP, and HTTP Referer header; `*` spans any number of characters; no wildcard means literal exact match; empty input is ignored; positioned between HTTP Method and the Exclude checkboxes in the filter bar
+- Referrer column in the Single Events table: shows the HTTP Referer header value, truncated with a tooltip for long URLs (same style as the URI column)
+- Top Referrers panel in the Statistics tab: lists the 10 most frequent Referer header values with request counts
+
 ## [0.2.0] - 2026-03-30
 
 ### Added

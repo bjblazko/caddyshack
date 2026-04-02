@@ -39,6 +39,8 @@ ANDed before aggregation.
 | `page` | Exact URI (e.g. `/blog/post-1`). |
 | `status` | `success` (2xx) or `error` (4xx+). Omit for all. |
 | `method` | HTTP method exact match (e.g. `GET`, `POST`). Omit for all. |
+| `ignore_static` | `1` to exclude JS, CSS, fonts, robots.txt, sitemap.xml requests. |
+| `ignore_images` | `1` to exclude PNG, JPG, SVG, ICO, and other image requests. |
 
 **Response** `200 OK` — `AnalysisResult` (no `file_id` in this response)
 **Error** `400 Bad Request` — missing or invalid params
