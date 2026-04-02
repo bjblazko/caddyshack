@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-02
+
 ### Added
 
 - Static file exclusion filter: "Static files" checkbox hides JS, CSS, fonts, `robots.txt`, and `sitemap.xml` requests from all statistics and the Single Events view
@@ -80,7 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - D3.js and TopoJSON served locally for offline use
 - Single-binary deployment with configurable listen address and GeoIP path
 
-[Unreleased]: https://github.com/bjblazko/caddyshack/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/bjblazko/caddyshack/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/bjblazko/caddyshack/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/bjblazko/caddyshack/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/bjblazko/caddyshack/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bjblazko/caddyshack/releases/tag/v0.1.0
