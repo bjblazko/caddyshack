@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Added `Content-Security-Policy` response header at the application level: `default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'` — no `'unsafe-inline'` required since the app uses no inline scripts or styles
+
 ## [0.3.0] - 2026-04-02
 
 ### Added
