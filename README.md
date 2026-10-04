@@ -93,6 +93,7 @@ Open [http://localhost:8080](http://localhost:8080) in your browser and upload a
 |------|---------|-------------|
 | `-addr` | `:8080` | Listen address (host:port) |
 | `-geodb` | `./data/dbip-country-lite.csv` | Path to DB-IP country-level CSV |
+| `-upload-ttl` | `1h` | Delete uploaded log files not used for this long (Go duration, e.g. `30m`) |
 
 ### GeoIP Setup (Optional)
 

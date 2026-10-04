@@ -48,6 +48,7 @@ read from disk on every call; no caching is needed there.
   []DayCount` is restored.
 - Temp files are not explicitly cleaned up; the OS temp directory lifecycle
   applies. This is acceptable for single-user and small-team deployments.
+  *(Amended by ADR-010: uploads are now deleted after an idle TTL.)*
 
 ## Consequences
 

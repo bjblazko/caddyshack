@@ -125,7 +125,7 @@ A URI is counted as a page only if **all** of the following hold:
 | `"error"` | 400–599 |
 
 All other filter dimensions (host, date range, country, browser, OS, page, method,
-`IgnoreStatic`, `IgnoreImages`) are applied in the same pass via `passesNonHostFilters`.
+`IgnoreStatic`, `IgnoreImages`) are applied in the same pass via `FilterParams.matchesExceptHost` (`internal/analyzer/filter.go`). Ranked lists break count ties by name, so results are deterministic.
 
 ## Static & Image Resource Classification
 

@@ -26,8 +26,8 @@ Country-level resolution via the DB-IP Lite CSV (`internal/geoip`). Only the res
 
 ## Stateless Processing
 
-- Uploaded log files are not written to disk by CaddyShack (Go's multipart handling may use temp files; these are cleaned up automatically)
-- No database, no sessions, no state persists between requests
+- Uploaded log files (raw IPs included) are stored in `$TMPDIR/caddyshack` so filters can re-analyze them (ADR-009). They are deleted once unused for `-upload-ttl` (default 1h), on startup, and immediately if the upload fails (ADR-010)
+- No database, no sessions; apart from uploads no state persists between requests
 - All parsed data lives only in memory for the duration of a single HTTP request
 
 ## Upload Limit

@@ -16,4 +16,5 @@ Each ADR captures: context (why a decision was needed), the decision taken, and 
 | [ADR-006](adr/ADR-006_optional-geoip-graceful-degradation.md) | GeoIP as optional feature with graceful degradation | Accepted |
 | [ADR-007](adr/ADR-007_canvas-2d-for-charts.md) | Canvas 2D API for bar charts — no charting library | Accepted |
 | [ADR-008](adr/ADR-008_single-pass-streaming-analysis.md) | Single-pass streaming log analysis | Accepted |
-| [ADR-009](adr/ADR-009_backend-filter-then-aggregate.md) | Backend filter-then-aggregate with temp file storage | Accepted |
+| [ADR-009](adr/ADR-009_backend-filter-then-aggregate.md) | Backend filter-then-aggregate with temp file storage | Accepted, amended by ADR-010 |
+| [ADR-010](adr/ADR-010_upload-ttl-cleanup.md) | Delete idle uploads after a TTL | Accepted |

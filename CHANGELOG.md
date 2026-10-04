@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `-upload-ttl` flag (default `1h`): uploaded log files are deleted once they have not been used for this long; every analysis of an upload resets the timer, and the upload directory is emptied on startup (ADR-010)
+- `/api/events` documented in the API spec
+
+### Changed
+
+- `/api/events` caps `limit` at 200 instead of resetting values above 200 to 100, matching the documented behaviour
+- An expired upload answers `404` with a message asking to upload the file again
+
+### Fixed
+
+- Pie chart legend swatches and the "World map data not available" message were unstyled because the CSP blocks inline `style` attributes
+- `/api/events` with a negative `offset` crashed the request; it is now treated as 0
+- Ranked lists (top pages, browsers, visitors, countries, …) ordered entries with equal counts randomly, so results could change between identical requests; ties are now ordered by name
+- A failed or truncated upload could go unnoticed and stayed on disk; it is now reported and deleted
+
 ### Security
+
+- Uploaded log files contain unanonymized IP addresses and were never deleted; they are now removed after `-upload-ttl` of inactivity (see Added)
 
 - Added `Content-Security-Policy` response header at the application level: `default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'` — no `'unsafe-inline'` required since the app uses no inline scripts or styles
 

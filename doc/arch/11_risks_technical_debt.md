@@ -42,13 +42,13 @@
 
 ---
 
-### R-05: Uploaded Files Persist in OS Temp Directory
+### R-05: Uploaded Files Persist in OS Temp Directory (mitigated)
 
-**Description:** Files uploaded via `POST /api/upload` are saved to `os.TempDir()/caddyshack/<hex_id>.jsonl` and are never explicitly deleted by the application. They persist for the lifetime of the process (or until the OS clears the temp directory).
+**Description:** Files uploaded via `POST /api/upload` are saved to `os.TempDir()/caddyshack/<hex_id>.jsonl` and are kept until they have been idle for `-upload-ttl`.
 
 **Impact:** Disk space accumulates if many large files are uploaded. On shared systems, temp files from the current session remain readable by other processes with filesystem access.
 
-**Mitigation:** This is acceptable for single-user and small-team deployments. The OS temp directory is typically cleaned on reboot. For long-running deployments, operators can add a periodic cleanup cron for `os.TempDir()/caddyshack/`. A future improvement could add a TTL-based cleanup goroutine at startup.
+**Mitigation:** Resolved by ADR-010: uploads are deleted after `-upload-ttl` (default 1h) of inactivity, the directory is emptied on startup, and failed uploads are removed immediately. Within the TTL the files remain on disk (directory mode `0700`).
 
 ---
 

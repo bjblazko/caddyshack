@@ -19,10 +19,17 @@ func openLogFile(w http.ResponseWriter, q url.Values) (f *os.File, path string, 
 		http.Error(w, msg, http.StatusBadRequest)
 		return nil, "", false
 	}
+	isUpload := q.Get("file") != ""
 	f, err := os.Open(path)
-	if err != nil {
+	switch {
+	case err != nil && isUpload:
+		http.Error(w, "Upload expired or not found, please upload the file again", http.StatusNotFound)
+		return nil, "", false
+	case err != nil:
 		http.Error(w, "File not found", http.StatusNotFound)
 		return nil, "", false
+	case isUpload:
+		touchUpload(path)
 	}
 	return f, path, true
 }

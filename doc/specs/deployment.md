@@ -12,6 +12,7 @@ Requires Go 1.22+ (uses method-based routing in `http.ServeMux`).
 |------|---------|-------------|
 | `-addr` | `:8080` | TCP listen address |
 | `-geodb` | `./data/dbip-country-lite.csv` | Path to DB-IP Lite CSV for GeoIP |
+| `-upload-ttl` | `1h` | Idle time after which an uploaded log file is deleted; must be positive (ADR-010) |
 
 ## Static File Serving
 

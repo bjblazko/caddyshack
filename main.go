@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/bjblazko/caddyshack/internal/geoip"
 	"github.com/bjblazko/caddyshack/internal/handler"
@@ -22,9 +23,14 @@ func securityHeaders(next http.Handler) http.Handler {
 func main() {
 	addr := flag.String("addr", ":8080", "listen address")
 	geodb := flag.String("geodb", "./data/dbip-country-lite.csv", "path to DB-IP country CSV")
+	uploadTTL := flag.Duration("upload-ttl", time.Hour, "delete uploaded logs not used for this long")
 	flag.Parse()
+	if *uploadTTL <= 0 {
+		log.Fatal("-upload-ttl must be positive")
+	}
 
 	geoip.Load(*geodb)
+	handler.StartUploadCleanup(*uploadTTL)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/upload", handler.Upload)
