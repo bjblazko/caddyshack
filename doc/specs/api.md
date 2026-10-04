@@ -4,7 +4,8 @@
 
 ### `POST /api/upload`
 
-Upload a Caddy JSONL log file. The file is saved to the OS temp directory and a
+Upload a Caddy JSONL log file. Accepts the same filter query parameters as
+`GET /api/analyze` for the initial analysis. The file is saved to the OS temp directory and a
 `file_id` is returned. Use the `file_id` with `GET /api/analyze` to re-analyze
 with filter parameters. Uploads not used for longer than `-upload-ttl`
 (default 1h) are deleted (ADR-010); every analyze/events call refreshes the timer.
@@ -42,6 +43,8 @@ ANDed before aggregation.
 | `method` | HTTP method exact match (e.g. `GET`, `POST`). Omit for all. |
 | `ignore_static` | `1` to exclude JS, CSS, fonts, robots.txt, sitemap.xml requests. |
 | `ignore_images` | `1` to exclude PNG, JPG, SVG, ICO, and other image requests. |
+| `ignore_monitors` | `1` to exclude uptime and health checks (client kind Monitor). |
+| `ignore_bots` | `1` to exclude crawlers, link previews and feed readers (client kind Bot). |
 | `search` | Case-insensitive glob (`*` wildcard) matched against URI, client IP and Referer. |
 
 **Response** `200 OK` — `AnalysisResult` (no `file_id` in this response)

@@ -48,7 +48,9 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = saved.Close() }()
 
 	log.Printf("Analyzing uploaded file: %s", header.Filename)
-	result := analyzer.Analyze(saved, analyzer.FilterParams{})
+	// Same filter query params as /api/analyze, so the first view already
+	// honours the UI's default exclusions.
+	result := analyzer.Analyze(saved, filterParams(r.URL.Query()))
 	result.FileID = fileID
 
 	w.Header().Set("Content-Type", "application/json")

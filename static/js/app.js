@@ -28,6 +28,8 @@
     let currentSearch    = '';
     let ignoreStatic     = false;
     let ignoreImages     = false;
+    let ignoreMonitors   = true;  // uptime checks: hidden by default
+    let ignoreBots       = true;  // crawlers, link previews: hidden by default
 
     let dateDebounceTimer = null;
 
@@ -63,7 +65,7 @@
         loading.classList.remove('hidden');
         dashboard.classList.add('hidden');
         try {
-            const resp = await fetch('/api/upload', { method: 'POST', body: form });
+            const resp = await fetch('/api/upload?' + buildFilterQuery(), { method: 'POST', body: form });
             if (!resp.ok) throw new Error(await resp.text() || resp.statusText);
             const result = await resp.json();
             fileRef = { type: 'uploaded', id: result.file_id };
@@ -142,9 +144,14 @@
     // ── Fetch & render ────────────────────────────────────────────────────────
 
     function buildQuery() {
-        const p = new URLSearchParams();
+        const p = buildFilterQuery();
         if (fileRef.type === 'uploaded') p.set('file', fileRef.id);
         else p.set('name', fileRef.name);
+        return p;
+    }
+
+    function buildFilterQuery() {
+        const p = new URLSearchParams();
         if (currentHost)      p.set('host',    currentHost);
         if (currentStatus !== 'all') p.set('status', currentStatus);
         if (currentDateStart) p.set('start',   currentDateStart);
@@ -157,6 +164,8 @@
         if (currentSearch.trim())  p.set('search',  currentSearch.trim());
         if (ignoreStatic)          p.set('ignore_static', '1');
         if (ignoreImages)     p.set('ignore_images',  '1');
+        if (ignoreMonitors)   p.set('ignore_monitors', '1');
+        if (ignoreBots)       p.set('ignore_bots',     '1');
         return p;
     }
 
@@ -204,6 +213,8 @@
         currentSearch    = '';
         ignoreStatic     = false;
         ignoreImages     = false;
+        ignoreMonitors   = true;
+        ignoreBots       = true;
 
         hostSelect.value = '';
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -218,6 +229,8 @@
         document.getElementById('search-filter').value  = '';
         document.getElementById('ignore-static').checked = false;
         document.getElementById('ignore-images').checked  = false;
+        document.getElementById('ignore-monitors').checked = true;
+        document.getElementById('ignore-bots').checked     = true;
 
         eventsOffset  = 0;
         eventsTotal   = 0;
@@ -266,6 +279,9 @@
         if (data.countries && data.countries.length > 0) {
             WorldMap.render('map-container', data.countries);
         }
+        // DB-IP Lite (CC BY 4.0) requires a link wherever its results are shown.
+        document.getElementById('geoip-attribution').hidden =
+            !(data.countries || []).some(c => c.code && c.code !== '??');
 
         renderTable('pages-table', data.top_pages || [], p => [
             truncate(p.name, 60, p.name), (p.count || 0).toLocaleString()
@@ -410,6 +426,16 @@
         ignoreImages = this.checked;
         doFetch();
     });
+    document.getElementById('ignore-monitors').addEventListener('change', function () {
+        if (!fileRef) return;
+        ignoreMonitors = this.checked;
+        doFetch();
+    });
+    document.getElementById('ignore-bots').addEventListener('change', function () {
+        if (!fileRef) return;
+        ignoreBots = this.checked;
+        doFetch();
+    });
 
     // ── Filter hints ──────────────────────────────────────────────────────────
 
@@ -428,7 +454,9 @@
                          currentBrowser, currentOS, pageLabel, currentMethod,
                          currentSearch.trim() || null,
                          ignoreStatic ? 'No static files' : null,
-                         ignoreImages  ? 'No images'       : null]
+                         ignoreImages  ? 'No images'       : null,
+                         ignoreMonitors ? 'No monitors'    : null,
+                         ignoreBots    ? 'No bots'         : null]
             .filter(Boolean);
 
         for (const id of ['hint-cards', 'hint-daily', 'hint-map', 'hint-countries',

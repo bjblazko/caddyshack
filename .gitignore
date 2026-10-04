@@ -5,7 +5,7 @@ caddyshack
 caddyshack-v*
 *.exe
 
-# GeoIP database (download separately, not redistributable)
+# GeoIP database (download separately; DB-IP Lite, CC BY 4.0 — not part of the repo)
 data/dbip-country-lite.csv
 
 # Distribution directory

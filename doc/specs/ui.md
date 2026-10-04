@@ -26,6 +26,14 @@ Single-page application (`index.html`). All sections hidden until a log file is 
 
 A second tab, **Single Events**, lists the filtered log entries newest first with infinite scrolling.
 
+### Footer
+
+Always visible below the dashboard, muted small text: "no telemetry, no
+external requests", the license with the no-warranty statement, a link to
+`/licenses.txt`, and the Caddy trademark note. When any country code other
+than `??` is shown, it starts with "IP geolocation by DB-IP" linking to
+db-ip.com, as the DB-IP Lite license (CC BY 4.0) requires.
+
 ### Empty Tables
 
 A table without rows shows one muted line (`--text-light`) spanning all
@@ -55,6 +63,14 @@ All filter controls are rendered in a single `.filter-bar` row above the summary
 | OS | `<select id="os-filter" class="dim-filter-select">` | `currentOS` | OS name exact match |
 | Page | `<select id="page-filter" class="dim-filter-select">` | `currentPage` | URI exact match |
 | HTTP Method | `<select id="method-filter" class="dim-filter-select">` | `currentMethod` | HTTP method exact match (e.g. `GET`, `POST`) |
+| Search | `<input id="search-filter">` | `currentSearch` | Glob over URI, IP, referrer (400ms debounce) |
+| Exclude: Static files | `<input type="checkbox" id="ignore-static">` | `ignoreStatic` | Off by default |
+| Exclude: Images | `<input type="checkbox" id="ignore-images">` | `ignoreImages` | Off by default |
+| Exclude: Monitors | `<input type="checkbox" id="ignore-monitors">` | `ignoreMonitors` | **On** by default; re-set on every new file |
+| Exclude: Bots | `<input type="checkbox" id="ignore-bots">` | `ignoreBots` | **On** by default; re-set on every new file |
+
+Scripts (curl, scanners …) deliberately have no exclusion so probing requests stay visible.
+The upload request carries the same filter params, so the first view already honours the defaults.
 
 Every filter change triggers `doFetch()`, which sends all active filter params to `GET /api/analyze` and re-renders the entire dashboard from the backend response. Date inputs use a 400ms debounce (`scheduleFetch`) to avoid rapid requests while typing.
 

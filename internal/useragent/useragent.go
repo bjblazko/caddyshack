@@ -1,53 +1,138 @@
-// Package useragent derives browser and OS names from User-Agent strings.
+// Package useragent derives client type, browser and OS names from
+// User-Agent strings.
 package useragent
 
-import "strings"
+import (
+	"cmp"
+	"strings"
+)
 
-// Parse extracts browser and OS names from a User-Agent string.
-// Detection order: more specific checks first (iOS before macOS,
-// since iPhone/iPad UAs also contain "Mac OS X").
-func Parse(ua string) (browser, os string) {
-	browser = "Other"
-	os = "Other"
+// Kind is the type of client that sent a request.
+type Kind string
 
-	// OS detection — specific before generic
-	switch {
-	case strings.Contains(ua, "iPhone") || strings.Contains(ua, "iPad"):
-		os = "iOS"
-	case strings.Contains(ua, "Windows"):
-		os = "Windows"
-	case strings.Contains(ua, "Macintosh") || strings.Contains(ua, "Mac OS X"):
-		os = "macOS"
-	case strings.Contains(ua, "Android"):
-		os = "Android"
-	case strings.Contains(ua, "CrOS"):
-		os = "ChromeOS"
-	case strings.Contains(ua, "Linux"):
-		os = "Linux"
+// Client kinds, see Classify.
+const (
+	KindBrowser Kind = "Browser"
+	KindMonitor Kind = "Monitor" // uptime and health checks
+	KindBot     Kind = "Bot"     // crawlers, link previews, feed readers
+	KindScript  Kind = "Script"  // command-line tools, HTTP libraries, scanners
+)
+
+// rule maps any of its tokens found in a User-Agent to a name.
+type rule struct {
+	name   string
+	tokens []string
+}
+
+// kindRules are checked in order; the first match wins. Monitors come first
+// because several identify as "bot" (UptimeRobot, Pingdom).
+var kindRules = []rule{
+	{string(KindMonitor), []string{
+		"uptime-kuma", "uptimerobot", "pingdom", "statuscake", "better uptime",
+		"betteruptime", "betterstack", "better stack", "healthchecks", "site24x7",
+		"updown.io", "hetrixtools", "freshping", "gatus", "blackbox-exporter",
+		"nodeping", "checkly", "upptime", "uptime.com", "cron-job.org",
+	}},
+	{string(KindBot), []string{
+		"bot", "spider", "crawl", "slurp", "facebookexternalhit", "meta-externalagent",
+		"whatsapp", "mastodon", "pleroma", "akkoma", "misskey", "feed", "rss",
+		"newsblur", "inoreader", "netnewswire", "headlesschrome", "lighthouse",
+		"preview", "ia_archiver", "semrush", "ahrefs", "bytespider", "chatgpt-user",
+		"claude-web", "anthropic-ai", "perplexity", "ccbot", "yandex", "qwant",
+		"googleother", "google-extended", "dataforseo", "embedly", "iframely",
+	}},
+	{string(KindScript), []string{
+		"curl/", "wget/", "python-requests", "python-urllib", "python-httpx",
+		"aiohttp", "go-http-client", "java/", "okhttp", "apache-httpclient",
+		"libwww-perl", "guzzlehttp", "node-fetch", "axios/", "undici", "ruby",
+		"powershell", "httpie", "postmanruntime", "scrapy", "reqwest", "dart:io",
+		"zgrab", "nuclei", "masscan", "nmap", "sqlmap", "nikto", "wpscan",
+		"gobuster", "dirbuster", "ffuf", "censys", "expanse",
+	}},
+}
+
+// osRules are checked in order, case-sensitively: iOS before macOS (iPhone
+// UAs contain "Mac OS X"), Android before Linux.
+var osRules = []rule{
+	{"iOS", []string{"iPhone", "iPad"}},
+	{"Windows", []string{"Windows"}},
+	{"macOS", []string{"Macintosh", "Mac OS X"}},
+	{"Android", []string{"Android"}},
+	{"ChromeOS", []string{"CrOS"}},
+	{"Linux", []string{"Linux"}},
+}
+
+// Classify returns the kind of client that sent a request with this
+// User-Agent. An empty User-Agent is a script; anything unrecognised is a
+// browser.
+func Classify(ua string) Kind {
+	if strings.TrimSpace(ua) == "" {
+		return KindScript
 	}
+	return Kind(match(kindRules, strings.ToLower(ua), string(KindBrowser)))
+}
 
-	// Browser detection (order matters)
-	lower := strings.ToLower(ua)
+// Parse extracts the client kind and the browser and OS names from a
+// User-Agent string. For clients that are not browsers the browser name is
+// their kind (Monitor, Bot, Script).
+func Parse(ua string) (kind Kind, browser, os string) {
+	os = match(osRules, ua, "Other")
+	if kind = Classify(ua); kind != KindBrowser {
+		return kind, string(kind), os
+	}
+	return kind, browserName(ua), os
+}
+
+// FromNames derives the client kind from browser and OS names that an
+// anonymizer kept in place of the User-Agent. Non-browser names are mapped to
+// their kind ("curl" → Script), as Parse would name them.
+func FromNames(browser, os string) (kind Kind, browserName, osName string) {
+	switch strings.ToLower(browser) {
+	case "monitor":
+		kind = KindMonitor
+	case "bot":
+		kind = KindBot
+	case "script", "curl", "wget":
+		kind = KindScript
+	default:
+		kind = KindBrowser
+	}
+	if kind != KindBrowser {
+		browser = string(kind)
+	}
+	return kind, browser, cmp.Or(os, "Other")
+}
+
+// browserName checks browsers built on Chrome before Chrome, and Chrome
+// before Safari (Chrome UAs contain "Safari/").
+func browserName(ua string) string {
 	switch {
-	case strings.Contains(ua, "curl/"):
-		browser = "curl"
-	case strings.Contains(lower, "bot") || strings.Contains(lower, "spider") || strings.Contains(lower, "crawl"):
-		browser = "Bot"
 	case strings.Contains(ua, "Edg/"):
-		browser = "Edge"
+		return "Edge"
 	case strings.Contains(ua, "OPR/") || strings.Contains(ua, "Opera"):
-		browser = "Opera"
+		return "Opera"
 	case strings.Contains(ua, "Vivaldi/"):
-		browser = "Vivaldi"
+		return "Vivaldi"
 	case strings.Contains(ua, "Brave"):
-		browser = "Brave"
+		return "Brave"
 	case strings.Contains(ua, "Chrome/") && strings.Contains(ua, "Safari/"):
-		browser = "Chrome"
+		return "Chrome"
 	case strings.Contains(ua, "Safari/") && !strings.Contains(ua, "Chrome/") && strings.Contains(ua, "Version/"):
-		browser = "Safari"
+		return "Safari"
 	case strings.Contains(ua, "Firefox/"):
-		browser = "Firefox"
+		return "Firefox"
 	}
+	return "Other"
+}
 
-	return browser, os
+// match returns the name of the first rule with a token contained in s.
+func match(rules []rule, s, fallback string) string {
+	for _, r := range rules {
+		for _, token := range r.tokens {
+			if strings.Contains(s, token) {
+				return r.name
+			}
+		}
+	}
+	return fallback
 }

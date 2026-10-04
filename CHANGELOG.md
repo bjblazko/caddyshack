@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Pre-anonymized logs: when the `User-Agent` header was stripped but `request.browser` / `request.os` are present, these names are used for the Browsers and OS charts and the client kind
+- Footer with "IP geolocation by DB-IP" credit (required by the DB-IP Lite CC BY 4.0 license, shown when country data is resolved), license and no-warranty note, Caddy trademark note, and a link to `/licenses.txt` listing the license texts of all bundled third-party components (D3.js, topojson-client, world-atlas, Go runtime)
+- README sections on privacy, licenses and trademarks
+- Client kinds: every request is classified by User-Agent as Browser, Monitor (Uptime Kuma, UptimeRobot, …), Bot (crawlers, link previews, feed readers) or Script (curl, HTTP libraries, scanners); new "Exclude: Monitors" and "Exclude: Bots" checkboxes and `ignore_monitors` / `ignore_bots` query params, also accepted by `POST /api/upload`
 - `-upload-ttl` flag (default `1h`): uploaded log files are deleted once they have not been used for this long; every analysis of an upload resets the timer, and the upload directory is emptied on startup (ADR-010)
 - `/api/events` documented in the API spec
 
 ### Changed
 
+- Container image is now based on `scratch` instead of `alpine`: only the static binary, its LICENSE and an empty `/tmp`; no shell inside the container anymore
+- Monitors and bots are hidden by default in the dashboard, so totals are lower than before; untick the checkboxes to include them. The API still includes them unless asked otherwise
+- Non-browser clients appear under their kind in the Browsers chart and the Browser filter (`Monitor`, `Bot`, `Script`); `curl` is now `Script`, UptimeRobot and Pingdom are `Monitor` instead of `Bot`
 - Top Referrers shows external referrers only (renamed "Top External Referrers"): referrers pointing to any site found in the loaded log are internal navigation and left out; sites are derived from the log, nothing is configured
 - Empty tables show "No data for the current filters." instead of a bare header
 - `/api/events` caps `limit` at 200 instead of resetting values above 200 to 100, matching the documented behaviour

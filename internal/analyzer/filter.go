@@ -2,23 +2,27 @@ package analyzer
 
 import (
 	"strings"
+
+	"github.com/bjblazko/caddyshack/internal/useragent"
 )
 
 // FilterParams holds all filter criteria applied before aggregation.
 // All conditions are ANDed. Empty/zero values mean "no filter" for that dimension.
 type FilterParams struct {
-	Host         string // virtual host, "" = all
-	StartDate    string // "YYYY-MM-DD", "" = unbounded
-	EndDate      string // "YYYY-MM-DD", "" = unbounded
-	Country      string // country name, "" = all
-	Browser      string // browser name, "" = all
-	OS           string // OS name, "" = all
-	Page         string // exact URI, "" = all
-	Status       string // "success" | "error", "" = all
-	Method       string // HTTP method e.g. "GET", "" = all
-	IgnoreStatic bool   // exclude JS, CSS, fonts, robots.txt, etc.
-	IgnoreImages bool   // exclude PNG, JPG, SVG, ICO, etc.
-	Search       string // glob pattern matched against URI, client IP, and Referer; "" = no filter
+	Host           string // virtual host, "" = all
+	StartDate      string // "YYYY-MM-DD", "" = unbounded
+	EndDate        string // "YYYY-MM-DD", "" = unbounded
+	Country        string // country name, "" = all
+	Browser        string // browser name, "" = all
+	OS             string // OS name, "" = all
+	Page           string // exact URI, "" = all
+	Status         string // "success" | "error", "" = all
+	Method         string // HTTP method e.g. "GET", "" = all
+	IgnoreStatic   bool   // exclude JS, CSS, fonts, robots.txt, etc.
+	IgnoreImages   bool   // exclude PNG, JPG, SVG, ICO, etc.
+	IgnoreMonitors bool   // exclude uptime and health checks
+	IgnoreBots     bool   // exclude crawlers, link previews, feed readers
+	Search         string // glob pattern matched against URI, client IP, and Referer; "" = no filter
 }
 
 // normalized returns p with its values in the canonical form of the log
@@ -35,6 +39,7 @@ func (p FilterParams) matchesExceptHost(e logEvent) bool {
 		p.matchesStatus(e.Status) &&
 		p.matchesDimensions(e) &&
 		p.matchesResourceType(e.Request.URI) &&
+		p.matchesClientKind(e.Kind) &&
 		p.matchesSearch(e)
 }
 
@@ -69,6 +74,13 @@ func (p FilterParams) matchesDimensions(e logEvent) bool {
 func (p FilterParams) matchesResourceType(uri string) bool {
 	return (!p.IgnoreStatic || !isStaticResource(uri)) &&
 		(!p.IgnoreImages || !isImageResource(uri))
+}
+
+// matchesClientKind applies the monitor and bot exclusions. Scripts have no
+// exclusion so that scanner probes always stay visible.
+func (p FilterParams) matchesClientKind(kind useragent.Kind) bool {
+	return (!p.IgnoreMonitors || kind != useragent.KindMonitor) &&
+		(!p.IgnoreBots || kind != useragent.KindBot)
 }
 
 func (p FilterParams) matchesSearch(e logEvent) bool {

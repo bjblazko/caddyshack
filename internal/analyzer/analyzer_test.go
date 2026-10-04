@@ -34,6 +34,9 @@ var filterCases = map[string]FilterParams{
 	"search-ref":    {Search: "*search.example*"},
 	"search-exact":  {Search: "/MISSING"},
 	"host-and-err":  {Host: "c.example", Status: "error"},
+	"no-monitors":   {IgnoreMonitors: true},
+	"no-bots":       {IgnoreBots: true},
+	"no-mon-bots":   {IgnoreMonitors: true, IgnoreBots: true},
 }
 
 func openFixture(t *testing.T, path string) *os.File {

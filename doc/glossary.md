@@ -118,8 +118,14 @@ Segmentation of traffic into *All* (every request), *Success (2xx)* and *Errors 
 **User-Agent**
 HTTP request header identifying the client software. Parsed by `useragent.go` to extract a browser name and OS name via ordered string matching.
 
+**Client Kind**
+Classification of a request by its User-Agent: *Browser*, *Monitor* (uptime and health checks such as Uptime Kuma), *Bot* (crawlers, link previews, feed readers) or *Script* (curl, HTTP libraries, scanners, empty User-Agent). For non-browsers the kind is shown as the browser name. Built-in rules, nothing configured.
+
 **Bot Detection**
-User-agents containing `bot`, `spider`, or `crawl` (case-insensitive) are classified as "Bot" rather than a named browser.
+Part of the Client Kind classification: user-agents containing `bot`, `spider`, `crawl` or a known crawler, preview or feed-reader token (case-insensitive) are "Bot" — unless a monitor rule matches first (UptimeRobot, Pingdom).
+
+**Monitor / Bot Exclusion**
+Filters `ignore_monitors=1` and `ignore_bots=1`. The UI enables both by default, so statistics show human traffic and scripts; unticking shows monitors or bots again. Scripts have no exclusion so scanner probes stay visible.
 
 **ALPN (Application-Layer Protocol Negotiation)**
 TLS extension that negotiates the HTTP protocol version. Appears as `h2` (HTTP/2) or `http/1.1` in the `tls.proto` log field.
@@ -212,7 +218,10 @@ The deployment model: one compiled Go executable with all static assets embedded
 Frontend files (HTML, CSS, JS, vendor libraries, geographic data) compiled into the binary via Go's `embed` package. Served from the `static/` directory tree.
 
 **Multi-stage Dockerfile**
-Docker build strategy with separate builder and runtime stages. The builder compiles the Go binary; the runtime stage copies only the binary to keep the final image small.
+Docker build strategy with separate builder and runtime stages. The builder compiles a static Go binary; the runtime stage is `scratch` with only the binary, the project LICENSE and an empty `/tmp`.
+
+**Licenses and Notices**
+`static/licenses.txt`, embedded and served at `/licenses.txt`: CaddyShack's license, the no-warranty statement, the Caddy trademark note and the license texts of every third-party component built in. Linked from the dashboard footer.
 
 **GHCR (GitHub Container Registry)**
 Where CaddyShack Docker images are published. Images are built for `linux/amd64` and `linux/arm64`.

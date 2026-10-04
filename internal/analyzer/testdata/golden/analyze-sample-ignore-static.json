@@ -66,14 +66,14 @@
       },
       {
         "name": "Bot",
-        "count": 215
+        "count": 189
       },
       {
         "name": "Edge",
         "count": 143
       },
       {
-        "name": "curl",
+        "name": "Script",
         "count": 118
       },
       {

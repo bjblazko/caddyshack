@@ -5,14 +5,14 @@
     "c.example"
   ],
   "report": {
-    "total_requests": 10,
+    "total_requests": 11,
     "unique_ips": 3,
-    "total_bytes": 3061,
-    "avg_response_ms": 154.19999999999996,
+    "total_bytes": 8361,
+    "avg_response_ms": 140.4545454545454,
     "status_codes": [
       {
         "name": "200",
-        "count": 3
+        "count": 5
       },
       {
         "name": "300",
@@ -20,10 +20,6 @@
       },
       {
         "name": "302",
-        "count": 1
-      },
-      {
-        "name": "304",
         "count": 1
       },
       {
@@ -68,47 +64,43 @@
     "browsers": [
       {
         "name": "Chrome",
-        "count": 3
+        "count": 4
       },
       {
         "name": "Firefox",
-        "count": 3
+        "count": 4
       },
       {
         "name": "Script",
         "count": 3
-      },
-      {
-        "name": "Bot",
-        "count": 1
       }
     ],
     "operating_systems": [
       {
-        "name": "Other",
+        "name": "Linux",
         "count": 4
       },
       {
-        "name": "Linux",
-        "count": 3
+        "name": "Windows",
+        "count": 4
       },
       {
-        "name": "Windows",
+        "name": "Other",
         "count": 3
       }
     ],
     "daily_traffic": [
       {
         "date": "2026-03-10",
-        "count": 3
+        "count": 4
       },
       {
         "date": "2026-03-11",
-        "count": 2
+        "count": 1
       },
       {
         "date": "2026-03-12",
-        "count": 5
+        "count": 6
       }
     ],
     "top_visitors": [
@@ -120,7 +112,7 @@
       },
       {
         "ip": "2001:db8:1::",
-        "count": 1,
+        "count": 2,
         "country": "??",
         "country_name": "??"
       },
@@ -135,13 +127,13 @@
       {
         "code": "??",
         "name": "??",
-        "count": 10
+        "count": 11
       }
     ],
     "methods": [
       {
         "name": "GET",
-        "count": 8
+        "count": 9
       },
       {
         "name": "HEAD",

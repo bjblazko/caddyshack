@@ -17,6 +17,7 @@ type logEvent struct {
 	Time        time.Time
 	Day         string // "YYYY-MM-DD" in UTC
 	ClientIP    string
+	Kind        useragent.Kind
 	Browser     string
 	OS          string
 	Referer     string
@@ -32,7 +33,7 @@ func enrich(entry logparser.LogEntry) logEvent {
 		clientIP = req.RemoteIP
 	}
 	t := time.Unix(int64(entry.Timestamp), int64((entry.Timestamp-float64(int64(entry.Timestamp)))*1e9))
-	browser, osName := useragent.Parse(firstHeader(req.Headers, "User-Agent"))
+	kind, browser, osName := clientOf(req)
 	countryCode := geoip.Lookup(clientIP)
 
 	return logEvent{
@@ -40,12 +41,23 @@ func enrich(entry logparser.LogEntry) logEvent {
 		Time:        t,
 		Day:         t.UTC().Format("2006-01-02"),
 		ClientIP:    clientIP,
+		Kind:        kind,
 		Browser:     browser,
 		OS:          osName,
 		Referer:     firstHeader(req.Headers, "Referer"),
 		CountryCode: countryCode,
 		CountryName: geoip.CountryName(countryCode),
 	}
+}
+
+// clientOf classifies the client from its User-Agent, or, in pre-anonymized
+// logs without one, from the browser and OS names the anonymizer kept.
+func clientOf(req logparser.Request) (useragent.Kind, string, string) {
+	ua := firstHeader(req.Headers, "User-Agent")
+	if ua == "" && req.Browser != "" {
+		return useragent.FromNames(req.Browser, req.OS)
+	}
+	return useragent.Parse(ua)
 }
 
 func firstHeader(headers map[string][]string, name string) string {

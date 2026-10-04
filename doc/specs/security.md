@@ -30,6 +30,13 @@ Country-level resolution via the DB-IP Lite CSV (`internal/geoip`). Only the res
 - No database, no sessions; apart from uploads no state persists between requests
 - All parsed data lives only in memory for the duration of a single HTTP request
 
+## Outbound Traffic
+
+CaddyShack makes no outbound requests (no telemetry, update check or CDN). The
+browser talks only to CaddyShack; the CSP (`default-src 'none'`, `'self'` for
+scripts, styles, images, fonts and fetch) enforces it. The DB-IP credit in the
+footer is a plain link, followed only when the user clicks it.
+
 ## Upload Limit
 
 `http.MaxBytesReader` enforces a 500 MB cap on uploaded files, preventing memory exhaustion from oversized inputs.

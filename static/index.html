@@ -94,6 +94,12 @@
                     <label class="check-filter">
                         <input type="checkbox" id="ignore-images"> Images
                     </label>
+                    <label class="check-filter">
+                        <input type="checkbox" id="ignore-monitors" checked> Monitors
+                    </label>
+                    <label class="check-filter">
+                        <input type="checkbox" id="ignore-bots" checked> Bots
+                    </label>
                 </div>
             </div>
         </div>
@@ -225,6 +231,16 @@
             </div>
         </div>
     </main>
+
+    <footer class="site-footer">
+        <p>
+            <span id="geoip-attribution" hidden>IP geolocation by <a href="https://db-ip.com" rel="noopener noreferrer">DB-IP</a> · </span>
+            CaddyShack runs on this server only: no telemetry, no external requests.
+            Apache License 2.0, provided without warranty as far as the law allows ·
+            <a href="/licenses.txt">Licenses and notices</a>
+        </p>
+        <p>Caddy is a registered trademark of Stack Holdings GmbH. CaddyShack is not affiliated with the Caddy project.</p>
+    </footer>
 
     <div id="loading" class="hidden">
         <div class="spinner"></div>

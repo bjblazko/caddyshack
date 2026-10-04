@@ -37,12 +37,12 @@
         "count": 44
       },
       {
-        "name": "curl",
+        "name": "Script",
         "count": 44
       },
       {
         "name": "Bot",
-        "count": 18
+        "count": 16
       },
       {
         "name": "Brave",
@@ -59,6 +59,10 @@
       {
         "name": "Vivaldi",
         "count": 5
+      },
+      {
+        "name": "Monitor",
+        "count": 2
       }
     ],
     "operating_systems": [

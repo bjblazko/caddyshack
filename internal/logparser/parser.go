@@ -25,7 +25,11 @@ type Request struct {
 	Host     string              `json:"host"`
 	URI      string              `json:"uri"`
 	Headers  map[string][]string `json:"headers"`
-	TLS      *TLSInfo            `json:"tls"`
+	// Browser and OS are set by anonymizers that drop the User-Agent header
+	// but keep its derived names (not part of Caddy's own format).
+	Browser string   `json:"browser"`
+	OS      string   `json:"os"`
+	TLS     *TLSInfo `json:"tls"`
 }
 
 // LogEntry is one line of a Caddy JSON access log.

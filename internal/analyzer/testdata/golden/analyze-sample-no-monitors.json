@@ -3,230 +3,238 @@
     "example.com"
   ],
   "report": {
-    "total_requests": 3819,
-    "unique_ips": 718,
-    "total_bytes": 111871404,
-    "avg_response_ms": 3.089584675657953,
+    "total_requests": 4441,
+    "unique_ips": 739,
+    "total_bytes": 111117084,
+    "avg_response_ms": 2.7170944667319756,
     "status_codes": [
       {
         "name": "200",
-        "count": 3819
+        "count": 3793
+      },
+      {
+        "name": "304",
+        "count": 607
+      },
+      {
+        "name": "404",
+        "count": 41
       }
     ],
     "top_pages": [
       {
         "name": "/",
-        "count": 279
+        "count": 308
       },
       {
         "name": "/products/product-a.html",
-        "count": 134
+        "count": 143
       },
       {
         "name": "/products/",
-        "count": 124
-      },
-      {
-        "name": "/products/product-b.html",
-        "count": 111
+        "count": 134
       },
       {
         "name": "/about.html",
-        "count": 105
+        "count": 118
+      },
+      {
+        "name": "/products/product-b.html",
+        "count": 118
       },
       {
         "name": "/blog/",
-        "count": 73
+        "count": 81
       },
       {
         "name": "/blog/2026-03-welcome.html",
-        "count": 59
+        "count": 63
       }
     ],
     "browsers": [
       {
         "name": "Chrome",
-        "count": 1773
+        "count": 2082
       },
       {
         "name": "Safari",
-        "count": 722
+        "count": 832
       },
       {
         "name": "Firefox",
-        "count": 546
+        "count": 623
       },
       {
         "name": "Bot",
-        "count": 192
+        "count": 222
       },
       {
         "name": "Edge",
-        "count": 139
-      },
-      {
-        "name": "Script",
-        "count": 115
+        "count": 161
       },
       {
         "name": "Brave",
-        "count": 112
+        "count": 130
+      },
+      {
+        "name": "Script",
+        "count": 129
       },
       {
         "name": "Opera",
-        "count": 105
+        "count": 121
       },
       {
         "name": "Vivaldi",
-        "count": 89
+        "count": 100
       },
       {
-        "name": "Monitor",
-        "count": 26
+        "name": "Other",
+        "count": 41
       }
     ],
     "operating_systems": [
       {
         "name": "Windows",
-        "count": 1335
+        "count": 1544
       },
       {
         "name": "macOS",
-        "count": 1190
-      },
-      {
-        "name": "iOS",
-        "count": 399
+        "count": 1401
       },
       {
         "name": "Linux",
-        "count": 394
+        "count": 464
+      },
+      {
+        "name": "iOS",
+        "count": 457
       },
       {
         "name": "Other",
-        "count": 333
+        "count": 392
       },
       {
         "name": "Android",
-        "count": 168
+        "count": 183
       }
     ],
     "daily_traffic": [
       {
         "date": "2026-03-10",
-        "count": 305
+        "count": 359
       },
       {
         "date": "2026-03-11",
-        "count": 271
+        "count": 314
       },
       {
         "date": "2026-03-12",
-        "count": 361
+        "count": 425
       },
       {
         "date": "2026-03-13",
-        "count": 333
+        "count": 388
       },
       {
         "date": "2026-03-14",
-        "count": 138
+        "count": 164
       },
       {
         "date": "2026-03-15",
-        "count": 180
+        "count": 202
       },
       {
         "date": "2026-03-16",
-        "count": 375
+        "count": 445
       },
       {
         "date": "2026-03-17",
-        "count": 257
+        "count": 300
       },
       {
         "date": "2026-03-18",
-        "count": 325
+        "count": 369
       },
       {
         "date": "2026-03-19",
-        "count": 336
+        "count": 384
       },
       {
         "date": "2026-03-20",
-        "count": 288
+        "count": 338
       },
       {
         "date": "2026-03-21",
-        "count": 180
+        "count": 205
       },
       {
         "date": "2026-03-22",
-        "count": 173
+        "count": 204
       },
       {
         "date": "2026-03-23",
-        "count": 297
+        "count": 344
       }
     ],
     "top_visitors": [
       {
         "ip": "17.99.98.0",
-        "count": 56,
+        "count": 67,
         "country": "??",
         "country_name": "??"
       },
       {
         "ip": "83.216.164.0",
-        "count": 55,
+        "count": 64,
         "country": "??",
         "country_name": "??"
       },
       {
         "ip": "91.55.168.0",
-        "count": 54,
-        "country": "??",
-        "country_name": "??"
-      },
-      {
-        "ip": "119.227.221.0",
-        "count": 51,
+        "count": 64,
         "country": "??",
         "country_name": "??"
       },
       {
         "ip": "178.72.208.0",
-        "count": 49,
+        "count": 57,
         "country": "??",
         "country_name": "??"
       },
       {
-        "ip": "90.62.15.0",
-        "count": 45,
+        "ip": "119.227.221.0",
+        "count": 56,
         "country": "??",
         "country_name": "??"
       },
       {
         "ip": "134.209.18.0",
-        "count": 43,
+        "count": 51,
         "country": "??",
         "country_name": "??"
       },
       {
         "ip": "134.243.141.0",
-        "count": 41,
+        "count": 51,
         "country": "??",
         "country_name": "??"
       },
       {
-        "ip": "15.221.29.0",
-        "count": 41,
+        "ip": "90.62.15.0",
+        "count": 51,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "93.117.163.0",
+        "count": 49,
         "country": "??",
         "country_name": "??"
       },
       {
         "ip": "93.180.240.0",
-        "count": 41,
+        "count": 49,
         "country": "??",
         "country_name": "??"
       }
@@ -235,13 +243,13 @@
       {
         "code": "??",
         "name": "??",
-        "count": 3819
+        "count": 4441
       }
     ],
     "methods": [
       {
         "name": "GET",
-        "count": 3779
+        "count": 4401
       },
       {
         "name": "HEAD",

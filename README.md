@@ -24,10 +24,11 @@ A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access log
 - **HTTP status code** breakdown — see 2xx, 3xx, 4xx, and 5xx ratios visually
 - **Top pages** listing the most-visited URIs (static assets automatically excluded)
 - **Top visitors** with anonymized IPs and country attribution
-- **Top referrers** — the 10 most frequent HTTP Referer values with request counts
+- **Top external referrers** — the 10 most frequent Referer values from outside the sites in the log
 - **Single Events tab** — scroll through raw log entries (most recent first) with lazy loading; 4xx/5xx rows highlighted in red; includes Referrer column
 - **Multi-host support** — analyze logs containing multiple virtual hosts, with per-host filtering
-- **11-dimension filtering** — filter by site, HTTP status range, date range, country, browser, OS, page, HTTP method, glob search (URI/IP/referrer), and optionally exclude static files or images; all filters applied on the backend with AND logic in a single streaming pass
+- **Multi-dimension filtering** — filter by site, HTTP status range, date range, country, browser, OS, page, HTTP method, glob search (URI/IP/referrer), and optionally exclude static files or images; all filters applied on the backend with AND logic in a single streaming pass
+- **Monitor & bot filtering** — uptime checks (Uptime Kuma, UptimeRobot …) and crawlers, link previews and feed readers are recognised by User-Agent and hidden by default; one click shows them again. Scripts and scanners stay visible
 - **Filter hint badges** per panel — each chart and table shows which filters are currently active
 - **GDPR-compliant** IP anonymization: last octet zeroed for IPv4, prefix truncated for IPv6
 - **Offline-first frontend** — D3.js and TopoJSON are served locally, no CDN calls
@@ -99,6 +100,8 @@ Open [http://localhost:8080](http://localhost:8080) in your browser and upload a
 
 For country-level geographic data, download the free [DB-IP Lite](https://db-ip.com/db/download/ip-to-country-lite) CSV and place it at `./data/dbip-country-lite.csv` (or specify a custom path with `-geodb`). Without it, the app works normally but country data shows as `??`.
 
+The DB-IP Lite database is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). When it is loaded, the dashboard footer credits DB-IP with a link, as the license requires.
+
 ## Log Format
 
 CaddyShack expects Caddy's native JSON access logs (JSONL — one JSON object per line). Enable logging in your Caddyfile:
@@ -165,6 +168,22 @@ caddyshack/
 - **Geography**: Natural Earth 110m country boundaries
 - **GeoIP**: DB-IP Lite CSV (optional, loaded at startup)
 
+## Privacy
+
+CaddyShack makes no outbound requests: no telemetry, no update check, no CDN. All analysis runs on the machine that runs CaddyShack, and the browser only talks to it (enforced by the Content-Security-Policy).
+
+- Uploaded log files contain the original IP addresses. They are stored in `$TMPDIR/caddyshack` so filters can re-read them, and deleted after `-upload-ttl` of inactivity (default 1h), on startup, and immediately if an upload fails.
+- Server-side logs (`/var/log/caddy`) are only read, never copied.
+- IP addresses are anonymized before they leave the server; country lookups use the original IP in memory.
+
+Operating CaddyShack on access logs of a public website is processing of personal data; the operator remains responsible for a legal basis and for informing visitors.
+
 ## License
 
-[Apache License 2.0](LICENSE)
+[Apache License 2.0](LICENSE). CaddyShack is provided without warranty, as far as the law allows.
+
+Third-party components built into the binary (D3.js, topojson-client, world-atlas — all ISC — and the Go runtime, BSD-3-Clause) are listed with their license texts in [`static/licenses.txt`](static/licenses.txt), which the running app also serves at `/licenses.txt`. Country boundaries derive from [Natural Earth](https://www.naturalearthdata.com) (public domain). Country data in the screenshots comes from IP geolocation by [DB-IP](https://db-ip.com) (CC BY 4.0).
+
+## Trademarks
+
+Caddy is a registered trademark of Stack Holdings GmbH. CaddyShack is an independent project for analyzing Caddy access logs and is not affiliated with or endorsed by the Caddy project or Stack Holdings GmbH.

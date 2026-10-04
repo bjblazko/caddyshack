@@ -58,17 +58,19 @@ func logFilePath(q url.Values) (path, msg string) {
 
 func filterParams(q url.Values) analyzer.FilterParams {
 	return analyzer.FilterParams{
-		Host:         q.Get("host"),
-		StartDate:    q.Get("start"),
-		EndDate:      q.Get("end"),
-		Country:      q.Get("country"),
-		Browser:      q.Get("browser"),
-		OS:           q.Get("os"),
-		Page:         q.Get("page"),
-		Status:       q.Get("status"),
-		Method:       q.Get("method"),
-		IgnoreStatic: q.Get("ignore_static") == "1",
-		IgnoreImages: q.Get("ignore_images") == "1",
-		Search:       q.Get("search"),
+		Host:           q.Get("host"),
+		StartDate:      q.Get("start"),
+		EndDate:        q.Get("end"),
+		Country:        q.Get("country"),
+		Browser:        q.Get("browser"),
+		OS:             q.Get("os"),
+		Page:           q.Get("page"),
+		Status:         q.Get("status"),
+		Method:         q.Get("method"),
+		IgnoreStatic:   q.Get("ignore_static") == "1",
+		IgnoreImages:   q.Get("ignore_images") == "1",
+		IgnoreMonitors: q.Get("ignore_monitors") == "1",
+		IgnoreBots:     q.Get("ignore_bots") == "1",
+		Search:         q.Get("search"),
 	}
 }

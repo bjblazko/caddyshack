@@ -26,6 +26,14 @@ Embedded `static/` directory served by `http.FileServer`:
 | `/img/*` | `static/img/` |
 | `/vendor/*` | `static/vendor/` (D3.js, topojson-client) |
 | `/data/*` | `static/data/` (countries-110m.json) |
+| `/licenses.txt` | `static/licenses.txt` — license texts of all third-party components in the binary; a test fails if a file in `static/vendor/` or `static/data/` is not listed |
+
+## Container Image
+
+Multi-stage build: `golang:1.25-alpine` compiles a static binary (`CGO_ENABLED=0`),
+the runtime stage is `scratch` with only `/app/caddyshack`, `/app/LICENSE` and an
+empty world-writable `/tmp` for uploads. No shell, libc or other userland is
+shipped, so no further licenses (e.g. BusyBox GPL-2.0) apply to the image.
 
 ## Health Check
 

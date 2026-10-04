@@ -24,6 +24,8 @@ type FilterParams struct {
     Method       string // HTTP method exact match e.g. "GET", "" = all
     IgnoreStatic bool   // exclude JS, CSS, fonts, robots.txt, sitemap.xml, etc.
     IgnoreImages bool   // exclude PNG, JPG, JPEG, GIF, SVG, WebP, ICO, BMP, AVIF, etc.
+    IgnoreMonitors bool // exclude client kind Monitor
+    IgnoreBots     bool // exclude client kind Bot
 }
 ```
 
@@ -140,7 +142,7 @@ A URI is counted as a page only if **all** of the following hold:
 | `"error"` | 400–599 |
 
 All other filter dimensions (host, date range, country, browser, OS, page, method,
-`IgnoreStatic`, `IgnoreImages`) are applied in the same pass via `FilterParams.matchesExceptHost` (`internal/analyzer/filter.go`). Ranked lists break count ties by name, so results are deterministic.
+`IgnoreStatic`, `IgnoreImages`, `IgnoreMonitors`, `IgnoreBots`) are applied in the same pass via `FilterParams.matchesExceptHost` (`internal/analyzer/filter.go`). Ranked lists break count ties by name, so results are deterministic.
 
 ## Static & Image Resource Classification
 
@@ -156,3 +158,21 @@ A URI is an image resource if it:
 - Has an extension in `.png`, `.jpg`, `.jpeg`, `.gif`, `.svg`, `.webp`, `.ico`, `.bmp`, `.avif`
 
 Query strings are stripped before extension matching (e.g. `/logo.png?v=3` → `.png`).
+
+## Client Kinds
+
+`internal/useragent` classifies every User-Agent into one kind, using
+built-in, case-insensitive substring rules (first match wins):
+
+| Kind | Examples | Exclusion |
+|------|----------|-----------|
+| `Monitor` | Uptime Kuma, UptimeRobot, Pingdom, StatusCake, Better Stack, Healthchecks | `IgnoreMonitors` |
+| `Bot` | search engines, AI and SEO crawlers, link previews (WhatsApp, Mastodon, Facebook), feed readers | `IgnoreBots` |
+| `Script` | curl, wget, HTTP libraries, scanners (zgrab, Nuclei, Nmap …), empty User-Agent | none — scanner probes stay visible |
+| `Browser` | everything else | none |
+
+Monitors are checked first because several identify as "bot". For every kind
+except `Browser`, the browser name is the kind (`Monitor`, `Bot`, `Script`);
+OS detection is unaffected. Pre-anonymized logs without a User-Agent use their
+`request.browser` / `request.os` fields instead (see `parsing.md`). The classification is a heuristic: a client that
+claims to be a browser is counted as one.

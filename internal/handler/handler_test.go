@@ -30,6 +30,11 @@ func useTempDir(t *testing.T) {
 
 func upload(t *testing.T) analyzer.AnalysisResult {
 	t.Helper()
+	return uploadWithQuery(t, "")
+}
+
+func uploadWithQuery(t *testing.T, query string) analyzer.AnalysisResult {
+	t.Helper()
 	data, err := os.ReadFile(fixture)
 	if err != nil {
 		t.Fatal(err)
@@ -40,7 +45,7 @@ func upload(t *testing.T) analyzer.AnalysisResult {
 	_, _ = fw.Write(data)
 	_ = mw.Close()
 
-	req := httptest.NewRequest(http.MethodPost, "/api/upload", &body)
+	req := httptest.NewRequest(http.MethodPost, "/api/upload"+query, &body)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	rec := httptest.NewRecorder()
 	Upload(rec, req)
@@ -121,5 +126,14 @@ func TestFileParamValidation(t *testing.T) {
 				t.Errorf("%s %q: status %d, want %d", name, query, got, want)
 			}
 		}
+	}
+}
+
+func TestUploadAppliesFilterParams(t *testing.T) {
+	useTempDir(t)
+	all := upload(t).Report.TotalRequests
+	noBots := uploadWithQuery(t, "?ignore_bots=1&ignore_monitors=1").Report.TotalRequests
+	if all != 13 || noBots != 11 {
+		t.Errorf("total requests: all=%d (want 13), without bots=%d (want 11)", all, noBots)
 	}
 }

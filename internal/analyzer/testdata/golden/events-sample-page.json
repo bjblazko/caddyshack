@@ -164,7 +164,7 @@
       "ip": "2a01:4f8:e79::",
       "country": "??",
       "country_name": "??",
-      "browser": "curl",
+      "browser": "Script",
       "os": "Other",
       "referer": ""
     },
@@ -239,7 +239,7 @@
       "ip": "185.3.126.0",
       "country": "??",
       "country_name": "??",
-      "browser": "curl",
+      "browser": "Script",
       "os": "Other",
       "referer": ""
     },
@@ -254,7 +254,7 @@
       "ip": "86.240.249.0",
       "country": "??",
       "country_name": "??",
-      "browser": "curl",
+      "browser": "Script",
       "os": "Other",
       "referer": "https://example.com/"
     },
@@ -269,7 +269,7 @@
       "ip": "212.222.138.0",
       "country": "??",
       "country_name": "??",
-      "browser": "curl",
+      "browser": "Script",
       "os": "Other",
       "referer": "https://example.com/"
     },

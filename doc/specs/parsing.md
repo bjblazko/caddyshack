@@ -52,6 +52,17 @@ Multiple site blocks may log to the same file; the `request.host` field distingu
 | `headers` | object | Yes — `User-Agent` extracted for browser/OS detection |
 | `tls` | object | Parsed, not currently aggregated |
 | `remote_port` | string | Ignored |
+| `browser`, `os` | string | Not written by Caddy. Used only when there is no `User-Agent` header — see below |
+
+### Pre-Anonymized Logs
+
+Anonymizers may strip the `User-Agent` header and keep only its derived names
+as `request.browser` and `request.os` (e.g. `"browser":"Firefox","os":"Linux"`).
+When a request has no `User-Agent` but a `browser` field, CaddyShack uses these
+names instead of classifying an empty User-Agent as `Script`. The client kind
+is derived from the browser name: `Bot` → Bot, `Monitor` → Monitor,
+`Script`/`curl`/`wget` → Script, anything else → Browser. A real `User-Agent`
+always takes precedence.
 
 ### `tls` Object
 

@@ -14,7 +14,7 @@
       "ip": "10.0.0.0",
       "country": "??",
       "country_name": "??",
-      "browser": "curl",
+      "browser": "Script",
       "os": "Other",
       "referer": ""
     },
@@ -29,7 +29,7 @@
       "ip": "10.0.0.0",
       "country": "??",
       "country_name": "??",
-      "browser": "curl",
+      "browser": "Script",
       "os": "Other",
       "referer": ""
     },
@@ -44,7 +44,7 @@
       "ip": "10.0.0.0",
       "country": "??",
       "country_name": "??",
-      "browser": "curl",
+      "browser": "Script",
       "os": "Other",
       "referer": ""
     }
