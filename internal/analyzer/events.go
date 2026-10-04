@@ -50,6 +50,7 @@ func ListEvents(r io.Reader, params FilterParams, offset, limit int) *EventsResu
 		limit = maxEventsLimit
 	}
 	offset = max(offset, 0)
+	params = params.normalized()
 
 	// Convert while streaming: holding full log entries (headers included)
 	// would cost far more memory than the compact EventEntry.

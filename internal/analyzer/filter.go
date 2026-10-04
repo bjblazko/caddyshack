@@ -21,6 +21,13 @@ type FilterParams struct {
 	Search       string // glob pattern matched against URI, client IP, and Referer; "" = no filter
 }
 
+// normalized returns p with its values in the canonical form of the log
+// entries they are compared with.
+func (p FilterParams) normalized() FilterParams {
+	p.Host = canonicalHost(p.Host)
+	return p
+}
+
 // matchesExceptHost reports whether e satisfies every active filter except the
 // host filter.
 func (p FilterParams) matchesExceptHost(e logEvent) bool {

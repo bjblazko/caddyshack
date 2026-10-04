@@ -31,7 +31,7 @@ ANDed before aggregation.
 **Filter parameters** (all optional):
 | Param | Description |
 |-------|-------------|
-| `host` | Virtual host (exact match). Omit for all hosts. |
+| `host` | Virtual host (exact match on the canonical host: case-insensitive, default ports `:443`/`:80` ignored). Omit for all hosts. |
 | `start` | Start date `YYYY-MM-DD` (inclusive). |
 | `end` | End date `YYYY-MM-DD` (inclusive). |
 | `country` | Country name (exact match, e.g. `Germany`). |

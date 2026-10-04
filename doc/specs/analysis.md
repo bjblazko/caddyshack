@@ -13,7 +13,7 @@ Empty/zero values mean "no filter" for that dimension.
 
 ```go
 type FilterParams struct {
-    Host         string // virtual host exact match, "" = all
+    Host         string // canonical host exact match, "" = all
     StartDate    string // "YYYY-MM-DD" inclusive lower bound, "" = unbounded
     EndDate      string // "YYYY-MM-DD" inclusive upper bound, "" = unbounded
     Country      string // country name exact match, "" = all
@@ -32,6 +32,9 @@ type FilterParams struct {
 For each log entry:
 
 1. Extract `client_ip`; fall back to `remote_ip` if absent.
+   Replace `request.host` by its **canonical host**: lower case, default ports
+   `:443` and `:80` removed (`huepattl.de:443` → `huepattl.de`); other ports are
+   kept. The `host` filter value is normalized the same way once per request.
 2. Compute UTC date from `ts` (`YYYY-MM-DD`).
 3. Parse User-Agent → browser name + OS name.
 4. GeoIP lookup on the original IP → country code → country name.

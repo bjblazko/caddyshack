@@ -62,6 +62,7 @@ type AnalysisResult struct {
 // pass all filters except the host filter, so the host list always reflects what
 // is selectable given the other active filters.
 func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
+	params = params.normalized()
 	hostSeen := make(map[string]bool)
 	report := newReportBuilder(params.Status == "error")
 

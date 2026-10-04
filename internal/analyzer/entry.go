@@ -25,6 +25,7 @@ type logEvent struct {
 }
 
 func enrich(entry logparser.LogEntry) logEvent {
+	entry.Request.Host = canonicalHost(entry.Request.Host)
 	req := entry.Request
 	clientIP := req.ClientIP
 	if clientIP == "" {
