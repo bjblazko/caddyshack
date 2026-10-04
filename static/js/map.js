@@ -216,7 +216,7 @@ const WorldMap = (() => {
                     .attr('fill', '#666');
             }
         }).catch(() => {
-            container.innerHTML = '<p style="color:#999;text-align:center;padding:2rem;">World map data not available</p>';
+            container.innerHTML = '<p class="map-unavailable">World map data not available</p>';
         });
     }
 

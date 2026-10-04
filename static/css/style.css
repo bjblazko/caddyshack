@@ -8,6 +8,8 @@
     --text: #333333;
     --text-light: #666666;
     --border: #e0e0e0;
+    --error: #b91c1c;
+    --error-bg: rgba(200, 50, 50, 0.06);
     --radius: 8px;
     --shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
@@ -563,11 +565,11 @@ main {
 }
 
 .events-table tr.error-row td {
-    background: rgba(200, 50, 50, 0.06);
+    background: var(--error-bg);
 }
 
 .events-table tr.error-row td.status-err {
-    color: #b91c1c;
+    color: var(--error);
     font-weight: 600;
 }
 
@@ -592,6 +594,12 @@ main {
     display: flex;
     align-items: center;
     gap: 0.3rem;
+}
+
+.map-unavailable {
+    color: var(--text-light);
+    text-align: center;
+    padding: 2rem;
 }
 
 .pie-legend-swatch {

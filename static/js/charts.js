@@ -200,13 +200,20 @@ const Charts = (() => {
             const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) + '%' : '';
             const item = document.createElement('div');
             item.className = 'pie-legend-item';
-            item.innerHTML =
-                `<span class="pie-legend-swatch" style="background:${PIE_GREENS[i % PIE_GREENS.length]}"></span>` +
-                `<span class="pie-legend-label">${labels[i]}</span>` +
-                `<span class="pie-legend-pct">${pct}</span>`;
+            // Built via DOM APIs: the CSP blocks inline style attributes.
+            const swatch = legendSpan('pie-legend-swatch', '');
+            swatch.style.background = PIE_GREENS[i % PIE_GREENS.length];
+            item.append(swatch, legendSpan('pie-legend-label', labels[i]), legendSpan('pie-legend-pct', pct));
             legend.appendChild(item);
         }
         container.appendChild(legend);
+    }
+
+    function legendSpan(className, text) {
+        const span = document.createElement('span');
+        span.className = className;
+        span.textContent = text;
+        return span;
     }
 
     return { renderBarChart, renderVerticalBarChart, renderPieChart };
