@@ -1,0 +1,46 @@
+name: CI
+
+# Runs on every push to main and on pull requests, and is called by the
+# release workflow before anything is built or published.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Format, vet, test, vulnerabilities
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Uses the toolchain directive in go.mod, the same Go as release builds.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "Not gofmt-formatted:"; echo "$unformatted"; exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test ./...
+
+      # Fails on known vulnerabilities in the standard library or in code
+      # paths CaddyShack actually calls.
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
+
+      # node --check takes one file; extra arguments would be ignored.
+      - name: JavaScript syntax
+        run: for f in static/js/*.js; do node --check "$f"; done

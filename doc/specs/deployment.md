@@ -28,6 +28,13 @@ Embedded `static/` directory served by `http.FileServer`:
 | `/data/*` | `static/data/` (countries-110m.json) |
 | `/licenses.txt` | `static/licenses.txt` — license texts of all third-party components in the binary; a test fails if a file in `static/vendor/` or `static/data/` is not listed |
 
+## CI and Releases
+
+`.github/workflows/ci.yml` checks every push to `main` and every pull request:
+`gofmt`, `go vet`, `go test`, `govulncheck` (pinned version) and the syntax of
+`static/js/*.js`. The release workflow (on `v*` tags) calls it first; binaries
+and the container image are only built and published when it passes.
+
 ## Container Image
 
 Multi-stage build: `golang:1.27-alpine` compiles a static binary (`CGO_ENABLED=0`),

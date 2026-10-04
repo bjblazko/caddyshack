@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CI workflow on every push to `main` and every pull request (gofmt, go vet, go test, govulncheck, JavaScript syntax); releases are only built and published when it passes
+
 ## [0.4.1] - 2026-10-04
 
 ### Security
