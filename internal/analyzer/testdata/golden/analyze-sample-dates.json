@@ -1,0 +1,218 @@
+{
+  "hosts": [
+    "example.com"
+  ],
+  "report": {
+    "total_requests": 751,
+    "unique_ips": 139,
+    "total_bytes": 19205301,
+    "avg_response_ms": 2.6967750011169795,
+    "status_codes": [
+      {
+        "name": "200",
+        "count": 632
+      },
+      {
+        "name": "304",
+        "count": 115
+      },
+      {
+        "name": "404",
+        "count": 4
+      }
+    ],
+    "top_pages": [
+      {
+        "name": "/",
+        "count": 46
+      },
+      {
+        "name": "/products/product-a.html",
+        "count": 34
+      },
+      {
+        "name": "/about.html",
+        "count": 21
+      },
+      {
+        "name": "/products/product-b.html",
+        "count": 19
+      },
+      {
+        "name": "/products/",
+        "count": 16
+      },
+      {
+        "name": "/blog/2026-03-welcome.html",
+        "count": 14
+      },
+      {
+        "name": "/blog/",
+        "count": 13
+      }
+    ],
+    "browsers": [
+      {
+        "name": "Chrome",
+        "count": 348
+      },
+      {
+        "name": "Firefox",
+        "count": 124
+      },
+      {
+        "name": "Safari",
+        "count": 116
+      },
+      {
+        "name": "Bot",
+        "count": 50
+      },
+      {
+        "name": "Brave",
+        "count": 32
+      },
+      {
+        "name": "Opera",
+        "count": 22
+      },
+      {
+        "name": "Vivaldi",
+        "count": 21
+      },
+      {
+        "name": "Edge",
+        "count": 19
+      },
+      {
+        "name": "curl",
+        "count": 15
+      },
+      {
+        "name": "Other",
+        "count": 4
+      }
+    ],
+    "operating_systems": [
+      {
+        "name": "Windows",
+        "count": 276
+      },
+      {
+        "name": "macOS",
+        "count": 234
+      },
+      {
+        "name": "Linux",
+        "count": 74
+      },
+      {
+        "name": "Other",
+        "count": 69
+      },
+      {
+        "name": "iOS",
+        "count": 63
+      },
+      {
+        "name": "Android",
+        "count": 35
+      }
+    ],
+    "daily_traffic": [
+      {
+        "date": "2026-03-11",
+        "count": 320
+      },
+      {
+        "date": "2026-03-12",
+        "count": 431
+      }
+    ],
+    "top_visitors": [
+      {
+        "ip": "193.202.93.0",
+        "count": 19,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "45.238.139.0",
+        "count": 19,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "52.36.64.0",
+        "count": 15,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "91.198.75.0",
+        "count": 15,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "134.243.141.0",
+        "count": 14,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "17.99.98.0",
+        "count": 14,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "160.245.200.0",
+        "count": 13,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "31.152.109.0",
+        "count": 13,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "119.227.221.0",
+        "count": 11,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "109.57.176.0",
+        "count": 10,
+        "country": "??",
+        "country_name": "??"
+      }
+    ],
+    "countries": [
+      {
+        "code": "??",
+        "name": "??",
+        "count": 751
+      }
+    ],
+    "methods": [
+      {
+        "name": "GET",
+        "count": 743
+      },
+      {
+        "name": "HEAD",
+        "count": 8
+      }
+    ],
+    "top_referrers": [
+      {
+        "name": "https://example.com/",
+        "count": 200
+      }
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+// Package useragent derives browser and OS names from User-Agent strings.
 package useragent
 
 import "strings"

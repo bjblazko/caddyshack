@@ -4,10 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/bjblazko/caddyshack/internal/analyzer"
 )
@@ -16,56 +13,15 @@ import (
 // as /api/analyze, plus offset and limit for pagination (default limit 100, max 200).
 func Events(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-
-	fileID := q.Get("file")
-	localName := q.Get("name")
-
-	var filePath string
-	switch {
-	case fileID != "":
-		if strings.ContainsAny(fileID, "/\\..") {
-			http.Error(w, "Invalid file id", http.StatusBadRequest)
-			return
-		}
-		filePath = filepath.Join(tempDir, fileID+".jsonl")
-	case localName != "":
-		if strings.Contains(localName, "/") || strings.Contains(localName, "..") {
-			http.Error(w, "Invalid filename", http.StatusBadRequest)
-			return
-		}
-		filePath = filepath.Join(logDir, localName)
-	default:
-		http.Error(w, "Provide file or name query param", http.StatusBadRequest)
+	f, filePath, ok := openLogFile(w, q)
+	if !ok {
 		return
 	}
-
-	f, err := os.Open(filePath)
-	if err != nil {
-		http.Error(w, "File not found", http.StatusNotFound)
-		return
-	}
-	defer f.Close()
-
-	params := analyzer.FilterParams{
-		Host:         q.Get("host"),
-		StartDate:    q.Get("start"),
-		EndDate:      q.Get("end"),
-		Country:      q.Get("country"),
-		Browser:      q.Get("browser"),
-		OS:           q.Get("os"),
-		Page:         q.Get("page"),
-		Status:       q.Get("status"),
-		Method:       q.Get("method"),
-		IgnoreStatic: q.Get("ignore_static") == "1",
-		IgnoreImages: q.Get("ignore_images") == "1",
-		Search:       q.Get("search"),
-	}
+	defer func() { _ = f.Close() }()
+	params := filterParams(q)
 
 	offset, _ := strconv.Atoi(q.Get("offset"))
-	limit, _ := strconv.Atoi(q.Get("limit"))
-	if limit <= 0 {
-		limit = 100
-	}
+	limit, _ := strconv.Atoi(q.Get("limit")) // analyzer.ListEvents applies default and cap
 
 	log.Printf("Events %s offset=%d limit=%d (host=%q start=%q end=%q)",
 		filePath, offset, limit, params.Host, params.StartDate, params.EndDate)

@@ -1,0 +1,52 @@
+{
+  "total": 13,
+  "offset": 0,
+  "limit": 3,
+  "events": [
+    {
+      "ts": "2026-03-12T00:01:42Z",
+      "method": "GET",
+      "host": "a.example",
+      "uri": "/choices",
+      "status": 300,
+      "size": 0,
+      "duration_ms": 1,
+      "ip": "10.0.0.0",
+      "country": "??",
+      "country_name": "??",
+      "browser": "curl",
+      "os": "Other",
+      "referer": ""
+    },
+    {
+      "ts": "2026-03-12T00:01:41Z",
+      "method": "GET",
+      "host": "a.example",
+      "uri": "/moved",
+      "status": 302,
+      "size": 0,
+      "duration_ms": 1,
+      "ip": "10.0.0.0",
+      "country": "??",
+      "country_name": "??",
+      "browser": "curl",
+      "os": "Other",
+      "referer": ""
+    },
+    {
+      "ts": "2026-03-12T00:01:40Z",
+      "method": "GET",
+      "host": "a.example",
+      "uri": "/bad-request",
+      "status": 400,
+      "size": 0,
+      "duration_ms": 1,
+      "ip": "10.0.0.0",
+      "country": "??",
+      "country_name": "??",
+      "browser": "curl",
+      "os": "Other",
+      "referer": ""
+    }
+  ]
+}

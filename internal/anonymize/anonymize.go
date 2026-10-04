@@ -1,3 +1,4 @@
+// Package anonymize truncates IP addresses so visitors cannot be identified.
 package anonymize
 
 import "strings"

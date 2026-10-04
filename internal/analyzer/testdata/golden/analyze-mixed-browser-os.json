@@ -1,0 +1,91 @@
+{
+  "hosts": [
+    "a.example",
+    "c.example"
+  ],
+  "report": {
+    "total_requests": 4,
+    "unique_ips": 2,
+    "total_bytes": 8010,
+    "avg_response_ms": 383.25,
+    "status_codes": [
+      {
+        "name": "200",
+        "count": 3
+      },
+      {
+        "name": "500",
+        "count": 1
+      }
+    ],
+    "top_pages": [
+      {
+        "name": "/",
+        "count": 1
+      },
+      {
+        "name": "/blog/post-1?utm=1",
+        "count": 1
+      }
+    ],
+    "browsers": [
+      {
+        "name": "Firefox",
+        "count": 4
+      }
+    ],
+    "operating_systems": [
+      {
+        "name": "Linux",
+        "count": 4
+      }
+    ],
+    "daily_traffic": [
+      {
+        "date": "2026-03-10",
+        "count": 2
+      },
+      {
+        "date": "2026-03-12",
+        "count": 2
+      }
+    ],
+    "top_visitors": [
+      {
+        "ip": "10.0.0.0",
+        "count": 3,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "203.0.113.0",
+        "count": 1,
+        "country": "??",
+        "country_name": "??"
+      }
+    ],
+    "countries": [
+      {
+        "code": "??",
+        "name": "??",
+        "count": 4
+      }
+    ],
+    "methods": [
+      {
+        "name": "GET",
+        "count": 4
+      }
+    ],
+    "top_referrers": [
+      {
+        "name": "https://a.example/blog/",
+        "count": 1
+      },
+      {
+        "name": "https://search.example/?q=x",
+        "count": 1
+      }
+    ]
+  }
+}

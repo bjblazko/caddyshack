@@ -1,0 +1,63 @@
+{
+  "hosts": [
+    "a.example"
+  ],
+  "report": {
+    "total_requests": 1,
+    "unique_ips": 1,
+    "total_bytes": 2000,
+    "avg_response_ms": 20,
+    "status_codes": [
+      {
+        "name": "200",
+        "count": 1
+      }
+    ],
+    "top_pages": [
+      {
+        "name": "/blog/post-1?utm=1",
+        "count": 1
+      }
+    ],
+    "browsers": [
+      {
+        "name": "Firefox",
+        "count": 1
+      }
+    ],
+    "operating_systems": [
+      {
+        "name": "Linux",
+        "count": 1
+      }
+    ],
+    "daily_traffic": [
+      {
+        "date": "2026-03-10",
+        "count": 1
+      }
+    ],
+    "top_visitors": [
+      {
+        "ip": "203.0.113.0",
+        "count": 1,
+        "country": "??",
+        "country_name": "??"
+      }
+    ],
+    "countries": [
+      {
+        "code": "??",
+        "name": "??",
+        "count": 1
+      }
+    ],
+    "methods": [
+      {
+        "name": "GET",
+        "count": 1
+      }
+    ],
+    "top_referrers": []
+  }
+}

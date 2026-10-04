@@ -1,3 +1,4 @@
+// Package geoip resolves IP addresses to countries using a DB-IP CSV file.
 package geoip
 
 import (
@@ -57,7 +58,7 @@ func Load(path string) {
 		log.Printf("GeoIP database not found at %s — country lookups disabled", path)
 		return
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	r := csv.NewReader(f)
 	for {

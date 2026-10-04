@@ -1,0 +1,82 @@
+{
+  "total": 13,
+  "offset": 8,
+  "limit": 5,
+  "events": [
+    {
+      "ts": "2026-03-11T00:00:00Z",
+      "method": "GET",
+      "host": "b.example",
+      "uri": "/img/logo.png?v=2",
+      "status": 304,
+      "size": 0,
+      "duration_ms": 1,
+      "ip": "10.0.0.0",
+      "country": "??",
+      "country_name": "??",
+      "browser": "Bot",
+      "os": "Other",
+      "referer": ""
+    },
+    {
+      "ts": "2026-03-10T00:00:03Z",
+      "method": "GET",
+      "host": "b.example",
+      "uri": "/css/site.css",
+      "status": 200,
+      "size": 300,
+      "duration_ms": 1,
+      "ip": "2001:db8:1::",
+      "country": "??",
+      "country_name": "??",
+      "browser": "Chrome",
+      "os": "Windows",
+      "referer": "https://b.example/"
+    },
+    {
+      "ts": "2026-03-10T00:00:02Z",
+      "method": "POST",
+      "host": "b.example",
+      "uri": "/api/login",
+      "status": 401,
+      "size": 50,
+      "duration_ms": 5,
+      "ip": "2001:db8:1::",
+      "country": "??",
+      "country_name": "??",
+      "browser": "Chrome",
+      "os": "Windows",
+      "referer": ""
+    },
+    {
+      "ts": "2026-03-10T00:00:01.5Z",
+      "method": "GET",
+      "host": "a.example",
+      "uri": "/blog/post-1?utm=1",
+      "status": 200,
+      "size": 2000,
+      "duration_ms": 20,
+      "ip": "203.0.113.0",
+      "country": "??",
+      "country_name": "??",
+      "browser": "Firefox",
+      "os": "Linux",
+      "referer": ""
+    },
+    {
+      "ts": "2026-03-10T00:00:00.25Z",
+      "method": "GET",
+      "host": "a.example",
+      "uri": "/",
+      "status": 200,
+      "size": 1000,
+      "duration_ms": 10,
+      "ip": "10.0.0.0",
+      "country": "??",
+      "country_name": "??",
+      "browser": "Firefox",
+      "os": "Linux",
+      "referer": "https://search.example/?q=x"
+    }
+  ]
+}

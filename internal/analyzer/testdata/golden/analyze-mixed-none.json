@@ -1,0 +1,174 @@
+{
+  "hosts": [
+    "a.example",
+    "b.example",
+    "c.example"
+  ],
+  "report": {
+    "total_requests": 13,
+    "unique_ips": 3,
+    "total_bytes": 8381,
+    "avg_response_ms": 118.99999999999997,
+    "status_codes": [
+      {
+        "name": "200",
+        "count": 6
+      },
+      {
+        "name": "300",
+        "count": 1
+      },
+      {
+        "name": "302",
+        "count": 1
+      },
+      {
+        "name": "304",
+        "count": 1
+      },
+      {
+        "name": "400",
+        "count": 1
+      },
+      {
+        "name": "401",
+        "count": 1
+      },
+      {
+        "name": "404",
+        "count": 1
+      },
+      {
+        "name": "500",
+        "count": 1
+      }
+    ],
+    "top_pages": [
+      {
+        "name": "/",
+        "count": 1
+      },
+      {
+        "name": "/blog/post-1?utm=1",
+        "count": 1
+      },
+      {
+        "name": "/choices",
+        "count": 1
+      },
+      {
+        "name": "/moved",
+        "count": 1
+      },
+      {
+        "name": "/robots.txt",
+        "count": 1
+      },
+      {
+        "name": "/same-ts",
+        "count": 1
+      }
+    ],
+    "browsers": [
+      {
+        "name": "Chrome",
+        "count": 4
+      },
+      {
+        "name": "Firefox",
+        "count": 4
+      },
+      {
+        "name": "curl",
+        "count": 3
+      },
+      {
+        "name": "Bot",
+        "count": 2
+      }
+    ],
+    "operating_systems": [
+      {
+        "name": "Other",
+        "count": 5
+      },
+      {
+        "name": "Linux",
+        "count": 4
+      },
+      {
+        "name": "Windows",
+        "count": 4
+      }
+    ],
+    "daily_traffic": [
+      {
+        "date": "2026-03-10",
+        "count": 4
+      },
+      {
+        "date": "2026-03-11",
+        "count": 3
+      },
+      {
+        "date": "2026-03-12",
+        "count": 6
+      }
+    ],
+    "top_visitors": [
+      {
+        "ip": "10.0.0.0",
+        "count": 10,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "2001:db8:1::",
+        "count": 2,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "203.0.113.0",
+        "count": 1,
+        "country": "??",
+        "country_name": "??"
+      }
+    ],
+    "countries": [
+      {
+        "code": "??",
+        "name": "??",
+        "count": 13
+      }
+    ],
+    "methods": [
+      {
+        "name": "GET",
+        "count": 11
+      },
+      {
+        "name": "HEAD",
+        "count": 1
+      },
+      {
+        "name": "POST",
+        "count": 1
+      }
+    ],
+    "top_referrers": [
+      {
+        "name": "https://a.example/blog/",
+        "count": 1
+      },
+      {
+        "name": "https://b.example/",
+        "count": 1
+      },
+      {
+        "name": "https://search.example/?q=x",
+        "count": 1
+      }
+    ]
+  }
+}

@@ -1,10 +1,8 @@
+// Package handler implements the CaddyShack HTTP API.
 package handler
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -14,8 +12,6 @@ import (
 )
 
 const maxUploadSize = 500 * 1024 * 1024 // 500 MB
-
-var tempDir = filepath.Join(os.TempDir(), "caddyshack")
 
 // Upload handles POST /api/upload. It saves the file to a temp directory so it
 // can be re-analyzed on each filter change without re-uploading.
@@ -32,7 +28,7 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing logfile field", http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	log.Printf("Saving uploaded file: %s (%d bytes)", header.Filename, header.Size)
 
@@ -49,7 +45,7 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
-	defer saved.Close()
+	defer func() { _ = saved.Close() }()
 
 	log.Printf("Analyzing uploaded file: %s", header.Filename)
 	result := analyzer.Analyze(saved, analyzer.FilterParams{})
@@ -62,27 +58,7 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 }
 
 // Health handles GET /api/health.
-func Health(w http.ResponseWriter, r *http.Request) {
+func Health(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
-}
-
-func saveTempFile(r io.Reader) (string, error) {
-	if err := os.MkdirAll(tempDir, 0700); err != nil {
-		return "", err
-	}
-	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	id := hex.EncodeToString(b)
-	f, err := os.Create(filepath.Join(tempDir, id+".jsonl"))
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-	if _, err := io.Copy(f, r); err != nil {
-		return "", err
-	}
-	return id, nil
+	_, _ = w.Write([]byte(`{"status":"ok"}`))
 }

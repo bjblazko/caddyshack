@@ -1,3 +1,4 @@
+// CaddyShack is a self-hosted analytics dashboard for Caddy access logs.
 package main
 
 import (

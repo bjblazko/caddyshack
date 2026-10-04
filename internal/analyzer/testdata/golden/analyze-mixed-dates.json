@@ -1,0 +1,134 @@
+{
+  "hosts": [
+    "a.example",
+    "b.example",
+    "c.example"
+  ],
+  "report": {
+    "total_requests": 9,
+    "unique_ips": 1,
+    "total_bytes": 5031,
+    "avg_response_ms": 167.88888888888883,
+    "status_codes": [
+      {
+        "name": "200",
+        "count": 3
+      },
+      {
+        "name": "300",
+        "count": 1
+      },
+      {
+        "name": "302",
+        "count": 1
+      },
+      {
+        "name": "304",
+        "count": 1
+      },
+      {
+        "name": "400",
+        "count": 1
+      },
+      {
+        "name": "404",
+        "count": 1
+      },
+      {
+        "name": "500",
+        "count": 1
+      }
+    ],
+    "top_pages": [
+      {
+        "name": "/choices",
+        "count": 1
+      },
+      {
+        "name": "/moved",
+        "count": 1
+      },
+      {
+        "name": "/robots.txt",
+        "count": 1
+      },
+      {
+        "name": "/same-ts",
+        "count": 1
+      }
+    ],
+    "browsers": [
+      {
+        "name": "curl",
+        "count": 3
+      },
+      {
+        "name": "Bot",
+        "count": 2
+      },
+      {
+        "name": "Chrome",
+        "count": 2
+      },
+      {
+        "name": "Firefox",
+        "count": 2
+      }
+    ],
+    "operating_systems": [
+      {
+        "name": "Other",
+        "count": 5
+      },
+      {
+        "name": "Linux",
+        "count": 2
+      },
+      {
+        "name": "Windows",
+        "count": 2
+      }
+    ],
+    "daily_traffic": [
+      {
+        "date": "2026-03-11",
+        "count": 3
+      },
+      {
+        "date": "2026-03-12",
+        "count": 6
+      }
+    ],
+    "top_visitors": [
+      {
+        "ip": "10.0.0.0",
+        "count": 9,
+        "country": "??",
+        "country_name": "??"
+      }
+    ],
+    "countries": [
+      {
+        "code": "??",
+        "name": "??",
+        "count": 9
+      }
+    ],
+    "methods": [
+      {
+        "name": "GET",
+        "count": 8
+      },
+      {
+        "name": "HEAD",
+        "count": 1
+      }
+    ],
+    "top_referrers": [
+      {
+        "name": "https://a.example/blog/",
+        "count": 1
+      }
+    ]
+  }
+}

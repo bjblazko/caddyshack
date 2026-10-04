@@ -1,3 +1,4 @@
+// Package logparser reads Caddy JSON access logs.
 package logparser
 
 import (
@@ -6,14 +7,16 @@ import (
 	"io"
 )
 
+// TLSInfo is the TLS connection state Caddy logs per request.
 type TLSInfo struct {
-	Resumed    bool   `json:"resumed"`
-	Version    int    `json:"version"`
-	CipherSuite int  `json:"cipher_suite"`
-	Proto      string `json:"proto"`
-	ServerName string `json:"server_name"`
+	Resumed     bool   `json:"resumed"`
+	Version     int    `json:"version"`
+	CipherSuite int    `json:"cipher_suite"`
+	Proto       string `json:"proto"`
+	ServerName  string `json:"server_name"`
 }
 
+// Request is the request section of a Caddy access log entry.
 type Request struct {
 	RemoteIP string              `json:"remote_ip"`
 	ClientIP string              `json:"client_ip"`
@@ -25,6 +28,7 @@ type Request struct {
 	TLS      *TLSInfo            `json:"tls"`
 }
 
+// LogEntry is one line of a Caddy JSON access log.
 type LogEntry struct {
 	Level     string  `json:"level"`
 	Timestamp float64 `json:"ts"`

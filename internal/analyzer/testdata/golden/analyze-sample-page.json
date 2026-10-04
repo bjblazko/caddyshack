@@ -1,0 +1,234 @@
+{
+  "hosts": [
+    "example.com"
+  ],
+  "report": {
+    "total_requests": 310,
+    "unique_ips": 246,
+    "total_bytes": 2200253,
+    "avg_response_ms": 6.470028362694602,
+    "status_codes": [
+      {
+        "name": "200",
+        "count": 279
+      },
+      {
+        "name": "304",
+        "count": 31
+      }
+    ],
+    "top_pages": [
+      {
+        "name": "/",
+        "count": 310
+      }
+    ],
+    "browsers": [
+      {
+        "name": "Chrome",
+        "count": 133
+      },
+      {
+        "name": "Firefox",
+        "count": 47
+      },
+      {
+        "name": "Safari",
+        "count": 44
+      },
+      {
+        "name": "curl",
+        "count": 44
+      },
+      {
+        "name": "Bot",
+        "count": 18
+      },
+      {
+        "name": "Brave",
+        "count": 9
+      },
+      {
+        "name": "Edge",
+        "count": 5
+      },
+      {
+        "name": "Opera",
+        "count": 5
+      },
+      {
+        "name": "Vivaldi",
+        "count": 5
+      }
+    ],
+    "operating_systems": [
+      {
+        "name": "Windows",
+        "count": 92
+      },
+      {
+        "name": "macOS",
+        "count": 84
+      },
+      {
+        "name": "Other",
+        "count": 62
+      },
+      {
+        "name": "Linux",
+        "count": 33
+      },
+      {
+        "name": "iOS",
+        "count": 24
+      },
+      {
+        "name": "Android",
+        "count": 15
+      }
+    ],
+    "daily_traffic": [
+      {
+        "date": "2026-03-10",
+        "count": 26
+      },
+      {
+        "date": "2026-03-11",
+        "count": 19
+      },
+      {
+        "date": "2026-03-12",
+        "count": 27
+      },
+      {
+        "date": "2026-03-13",
+        "count": 25
+      },
+      {
+        "date": "2026-03-14",
+        "count": 11
+      },
+      {
+        "date": "2026-03-15",
+        "count": 16
+      },
+      {
+        "date": "2026-03-16",
+        "count": 30
+      },
+      {
+        "date": "2026-03-17",
+        "count": 27
+      },
+      {
+        "date": "2026-03-18",
+        "count": 26
+      },
+      {
+        "date": "2026-03-19",
+        "count": 24
+      },
+      {
+        "date": "2026-03-20",
+        "count": 31
+      },
+      {
+        "date": "2026-03-21",
+        "count": 14
+      },
+      {
+        "date": "2026-03-22",
+        "count": 9
+      },
+      {
+        "date": "2026-03-23",
+        "count": 25
+      }
+    ],
+    "top_visitors": [
+      {
+        "ip": "178.72.208.0",
+        "count": 7,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "134.243.141.0",
+        "count": 5,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "17.99.98.0",
+        "count": 5,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "83.216.164.0",
+        "count": 5,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "93.180.240.0",
+        "count": 5,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "109.57.176.0",
+        "count": 4,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "188.167.96.0",
+        "count": 4,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "193.202.93.0",
+        "count": 4,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "91.55.168.0",
+        "count": 4,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "93.117.163.0",
+        "count": 4,
+        "country": "??",
+        "country_name": "??"
+      }
+    ],
+    "countries": [
+      {
+        "code": "??",
+        "name": "??",
+        "count": 310
+      }
+    ],
+    "methods": [
+      {
+        "name": "GET",
+        "count": 270
+      },
+      {
+        "name": "HEAD",
+        "count": 40
+      }
+    ],
+    "top_referrers": [
+      {
+        "name": "https://example.com/",
+        "count": 79
+      }
+    ]
+  }
+}

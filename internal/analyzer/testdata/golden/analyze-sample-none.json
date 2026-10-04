@@ -1,0 +1,266 @@
+{
+  "hosts": [
+    "example.com"
+  ],
+  "report": {
+    "total_requests": 4471,
+    "unique_ips": 745,
+    "total_bytes": 111871404,
+    "avg_response_ms": 2.7154117485543603,
+    "status_codes": [
+      {
+        "name": "200",
+        "count": 3819
+      },
+      {
+        "name": "304",
+        "count": 611
+      },
+      {
+        "name": "404",
+        "count": 41
+      }
+    ],
+    "top_pages": [
+      {
+        "name": "/",
+        "count": 310
+      },
+      {
+        "name": "/products/product-a.html",
+        "count": 145
+      },
+      {
+        "name": "/products/",
+        "count": 134
+      },
+      {
+        "name": "/products/product-b.html",
+        "count": 120
+      },
+      {
+        "name": "/about.html",
+        "count": 118
+      },
+      {
+        "name": "/blog/",
+        "count": 81
+      },
+      {
+        "name": "/blog/2026-03-welcome.html",
+        "count": 63
+      }
+    ],
+    "browsers": [
+      {
+        "name": "Chrome",
+        "count": 2082
+      },
+      {
+        "name": "Safari",
+        "count": 832
+      },
+      {
+        "name": "Firefox",
+        "count": 623
+      },
+      {
+        "name": "Bot",
+        "count": 252
+      },
+      {
+        "name": "Edge",
+        "count": 161
+      },
+      {
+        "name": "Brave",
+        "count": 130
+      },
+      {
+        "name": "curl",
+        "count": 129
+      },
+      {
+        "name": "Opera",
+        "count": 121
+      },
+      {
+        "name": "Vivaldi",
+        "count": 100
+      },
+      {
+        "name": "Other",
+        "count": 41
+      }
+    ],
+    "operating_systems": [
+      {
+        "name": "Windows",
+        "count": 1544
+      },
+      {
+        "name": "macOS",
+        "count": 1401
+      },
+      {
+        "name": "Linux",
+        "count": 464
+      },
+      {
+        "name": "iOS",
+        "count": 457
+      },
+      {
+        "name": "Other",
+        "count": 422
+      },
+      {
+        "name": "Android",
+        "count": 183
+      }
+    ],
+    "daily_traffic": [
+      {
+        "date": "2026-03-10",
+        "count": 359
+      },
+      {
+        "date": "2026-03-11",
+        "count": 320
+      },
+      {
+        "date": "2026-03-12",
+        "count": 431
+      },
+      {
+        "date": "2026-03-13",
+        "count": 392
+      },
+      {
+        "date": "2026-03-14",
+        "count": 164
+      },
+      {
+        "date": "2026-03-15",
+        "count": 208
+      },
+      {
+        "date": "2026-03-16",
+        "count": 445
+      },
+      {
+        "date": "2026-03-17",
+        "count": 300
+      },
+      {
+        "date": "2026-03-18",
+        "count": 369
+      },
+      {
+        "date": "2026-03-19",
+        "count": 384
+      },
+      {
+        "date": "2026-03-20",
+        "count": 338
+      },
+      {
+        "date": "2026-03-21",
+        "count": 210
+      },
+      {
+        "date": "2026-03-22",
+        "count": 207
+      },
+      {
+        "date": "2026-03-23",
+        "count": 344
+      }
+    ],
+    "top_visitors": [
+      {
+        "ip": "17.99.98.0",
+        "count": 67,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "83.216.164.0",
+        "count": 64,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "91.55.168.0",
+        "count": 64,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "178.72.208.0",
+        "count": 57,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "119.227.221.0",
+        "count": 56,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "134.209.18.0",
+        "count": 51,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "134.243.141.0",
+        "count": 51,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "90.62.15.0",
+        "count": 51,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "93.117.163.0",
+        "count": 49,
+        "country": "??",
+        "country_name": "??"
+      },
+      {
+        "ip": "93.180.240.0",
+        "count": 49,
+        "country": "??",
+        "country_name": "??"
+      }
+    ],
+    "countries": [
+      {
+        "code": "??",
+        "name": "??",
+        "count": 4471
+      }
+    ],
+    "methods": [
+      {
+        "name": "GET",
+        "count": 4431
+      },
+      {
+        "name": "HEAD",
+        "count": 40
+      }
+    ],
+    "top_referrers": [
+      {
+        "name": "https://example.com/",
+        "count": 1157
+      }
+    ]
+  }
+}
