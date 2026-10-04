@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Build with Go 1.27.1: the downloadable release binaries up to v0.4.0 were built with Go 1.25.0 (no longer supported) and contained 45 known standard-library vulnerabilities, among them in `net/http`, `net/url` (query parsing) and `crypto/tls`; `govulncheck` now reports none. Container images were not affected to the same degree: they used the latest Go 1.25 patch release. Release builds use the `toolchain` version in `go.mod`, building from source needs Go 1.26+
+
+### Changed
+
+- macOS binaries require macOS 13 Ventura or later (Go 1.27)
+- Release workflow uses current major versions of all actions (checkout v7, setup-go v7, action-gh-release v3, Docker actions v4/v6/v7)
+
 ## [0.4.0] - 2026-10-04
 
 ### Added

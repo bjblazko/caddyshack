@@ -5,7 +5,7 @@
 | Constraint | Detail |
 |------------|--------|
 | Go standard library only | No external Go module dependencies beyond the standard library. Keeps the dependency surface minimal and the build reproducible. |
-| Go 1.22+ | Required for method-based route registration in `http.ServeMux` (`mux.HandleFunc("POST /api/upload", ...)`). |
+| Go 1.26+ | Oldest supported Go release (`go.mod`); method-based routing in `http.ServeMux` needs 1.22+. Release builds use the `toolchain` version (go1.27.1). |
 | No frontend framework | Vanilla HTML5 / CSS3 / JavaScript only. No React, Vue, Angular, npm, or build step. |
 | No CDN at runtime | All frontend assets (D3.js, TopoJSON client, country boundary data) must be served locally from the binary. |
 | No database | No SQL, key-value store, or any form of server-side persistence. |

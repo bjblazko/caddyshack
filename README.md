@@ -77,7 +77,7 @@ podman compose up -d
 
 ### Prerequisites
 
-- Go 1.25 or later (only needed to build from source)
+- Go 1.26 or later (only needed to build from source); release binaries are built with the exact toolchain in `go.mod`
 
 ### Build from Source
 

@@ -4,7 +4,7 @@
 
 CaddyShack compiles to a single Go binary with all frontend assets embedded via the `embed` package. No installation, no configuration files, no external runtime dependencies (GeoIP CSV is optional).
 
-Requires Go 1.22+ (uses method-based routing in `http.ServeMux`).
+Building from source requires Go 1.26+, the oldest supported Go release (`go` directive in `go.mod`). Release binaries and the container image are built with the version in the `toolchain` directive (currently go1.27.1), which `actions/setup-go` reads. Keep it on a supported, patched release: a build with an outdated toolchain ships its standard-library vulnerabilities.
 
 ## CLI Flags
 
@@ -30,7 +30,7 @@ Embedded `static/` directory served by `http.FileServer`:
 
 ## Container Image
 
-Multi-stage build: `golang:1.25-alpine` compiles a static binary (`CGO_ENABLED=0`),
+Multi-stage build: `golang:1.27-alpine` compiles a static binary (`CGO_ENABLED=0`),
 the runtime stage is `scratch` with only `/app/caddyshack`, `/app/LICENSE` and an
 empty world-writable `/tmp` for uploads. No shell, libc or other userland is
 shipped, so no further licenses (e.g. BusyBox GPL-2.0) apply to the image.
