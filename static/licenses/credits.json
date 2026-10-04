@@ -1,0 +1,50 @@
+{
+  "inside": [
+    {
+      "name": "D3.js", "version": "7.9.0",
+      "use": "Draws the world map",
+      "license": "ISC", "home": "https://d3js.org",
+      "text": "/licenses/d3.txt", "files": ["vendor/d3.min.js"]
+    },
+    {
+      "name": "topojson-client", "version": "3.1.0",
+      "use": "Reads the country shapes for the map",
+      "license": "ISC", "home": "https://github.com/topojson/topojson-client",
+      "text": "/licenses/topojson-client.txt", "files": ["vendor/topojson-client.min.js"]
+    },
+    {
+      "name": "world-atlas", "version": "2.0.2",
+      "use": "The country shapes, derived from Natural Earth",
+      "license": "ISC", "home": "https://github.com/topojson/world-atlas",
+      "text": "/licenses/world-atlas.txt", "files": ["data/countries-110m.json"]
+    },
+    {
+      "name": "IBM Plex Sans and IBM Plex Mono", "version": "1.1.0 and 2.5.0",
+      "use": "The typefaces of the interface, IBM's own Latin-1 files, unmodified",
+      "license": "SIL Open Font License 1.1", "home": "https://github.com/IBM/plex",
+      "text": "/fonts/OFL.txt",
+      "files": ["fonts/IBMPlexSans-Regular-Latin1.woff2", "fonts/IBMPlexSans-Medium-Latin1.woff2",
+                "fonts/IBMPlexSans-SemiBold-Latin1.woff2", "fonts/IBMPlexMono-Regular-Latin1.woff2",
+                "fonts/IBMPlexMono-Medium-Latin1.woff2", "fonts/OFL.txt"]
+    },
+    {
+      "name": "Go", "version": "",
+      "use": "The language, runtime and standard library compiled into the program",
+      "license": "BSD-3-Clause", "home": "https://go.dev",
+      "text": "/licenses/go.txt", "files": []
+    }
+  ],
+  "data": [
+    {
+      "name": "Natural Earth",
+      "use": "The country boundaries world-atlas is made from",
+      "license": "Public domain", "home": "https://www.naturalearthdata.com"
+    },
+    {
+      "name": "IP to Country Lite by DB-IP",
+      "use": "The optional GeoIP database for countries. You download it yourself; it is not part of CaddyShack",
+      "license": "CC BY 4.0", "home": "https://db-ip.com",
+      "text": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  ]
+}

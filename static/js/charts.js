@@ -1,220 +1,188 @@
 /**
- * Charts module — Canvas 2D bar charts for CaddyShack dashboard.
+ * Charts module — Canvas 2D bar charts. Colors come from the CSS tokens at
+ * draw time, so light and dark mode need no code; redraw on theme change.
  */
 
 const Charts = (() => {
-    const COLORS = {
-        green: '#4a8c3f',
-        greenLight: '#8bc34a',
-        greenDark: '#2d5a27',
-        gray: '#e0e0e0',
-        text: '#333333',
-        textLight: '#666666',
+    // Fixed color per entity, so a browser keeps its color when filters change
+    // the ranking. Non-browser clients and "Other" stay neutral on purpose.
+    const ENTITY_SLOTS = {
+        Chrome: 1, Firefox: 2, Safari: 3, Brave: 4, Opera: 5, Vivaldi: 6, Edge: 7,
+        Windows: 1, macOS: 3, Linux: 4, ChromeOS: 5, Android: 6, iOS: 7,
     };
 
-    /**
-     * Render a horizontal bar chart on a canvas element.
-     * @param {string} canvasId - Canvas element ID
-     * @param {string[]} labels - Bar labels
-     * @param {number[]} values - Bar values
-     * @param {number} total - Total for percentage calculation (0 to skip %)
-     * @param {string} color - Bar fill color
-     */
-    function renderBarChart(canvasId, labels, values, total, color) {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+    function token(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue('--' + name).trim();
+    }
+
+    function entityColor(label) {
+        const slot = ENTITY_SLOTS[label];
+        return slot ? token('series-' + slot) : token('fg-3');
+    }
+
+    // 2xx confirmed, 4xx/5xx need attention, 3xx neutral; the code is the label.
+    function statusColor(code) {
+        if (code.startsWith('2')) return token('confirm');
+        if (code.startsWith('4') || code.startsWith('5')) return token('warning');
+        return token('fg-3');
+    }
+
+    function font(size, family, weight) {
+        return (weight || 400) + ' ' + size + 'px ' + token(family || 'font-sans');
+    }
+
+    // Size the canvas to its CSS width at device resolution; returns the context.
+    function setup(canvas, height) {
         const dpr = window.devicePixelRatio || 1;
-
-        const barHeight = 24;
-        const gap = 6;
-        const labelWidth = 120;
-        const valueWidth = 100;
-        const padTop = 8;
-        const padBottom = 8;
-
-        const height = padTop + labels.length * (barHeight + gap) + padBottom;
-        const width = canvas.parentElement.clientWidth - 32;
-
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        canvas.style.width = width + 'px';
+        const width = canvas.clientWidth || canvas.parentElement.clientWidth;
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
         canvas.style.height = height + 'px';
+        const ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
+        return { ctx, width };
+    }
 
-        const maxVal = Math.max(...values, 1);
-        const barAreaWidth = width - labelWidth - valueWidth;
-
-        ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-        ctx.textBaseline = 'middle';
-
-        for (let i = 0; i < labels.length; i++) {
-            const y = padTop + i * (barHeight + gap);
-            const barW = (values[i] / maxVal) * barAreaWidth;
-            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) + '%' : '';
-
-            // Label
-            ctx.fillStyle = COLORS.text;
-            ctx.textAlign = 'right';
-            ctx.fillText(labels[i], labelWidth - 10, y + barHeight / 2);
-
-            // Bar background
-            ctx.fillStyle = COLORS.gray;
-            ctx.fillRect(labelWidth, y, barAreaWidth, barHeight);
-
-            // Bar fill
-            ctx.fillStyle = color || COLORS.green;
-            ctx.fillRect(labelWidth, y, barW, barHeight);
-
-            // Value text
-            ctx.fillStyle = COLORS.textLight;
-            ctx.textAlign = 'left';
-            const valText = values[i].toLocaleString() + (pct ? '  ' + pct : '');
-            ctx.fillText(valText, labelWidth + barAreaWidth + 8, y + barHeight / 2);
-        }
+    function roundedBar(ctx, x, y, w, h, r) {
+        if (w <= 0) return;
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x, y + h);
+        ctx.closePath();
+        ctx.fill();
     }
 
     /**
-     * Render a vertical bar chart (for daily traffic).
+     * Ranked horizontal bars: label · bar · count and share.
      * @param {string} canvasId
-     * @param {string[]} labels - Date labels
+     * @param {string[]} labels
+     * @param {number[]} values
+     * @param {number} total - for the share column (0 to omit)
+     * @param {(label: string) => string} colorFor - bar color per label
+     */
+    function renderBarChart(canvasId, labels, values, total, colorFor) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const row = 28, bar = 12;
+        const { ctx, width } = setup(canvas, Math.max(row, labels.length * row));
+
+        ctx.font = font(13);
+        const labelW = Math.min(width * 0.4,
+            Math.max(...labels.map(l => ctx.measureText(l).width), 0) + 12);
+        ctx.font = font(13, 'font-mono');
+        const valueTexts = values.map(v => v.toLocaleString() +
+            (total > 0 ? '  ' + ((v / total) * 100).toFixed(1).padStart(4) + '%' : ''));
+        const valueW = Math.max(...valueTexts.map(t => ctx.measureText(t).width), 0) + 12;
+        const trackW = Math.max(0, width - labelW - valueW);
+        const maxVal = Math.max(...values, 1);
+
+        ctx.textBaseline = 'middle';
+        labels.forEach((label, i) => {
+            const mid = i * row + row / 2;
+            ctx.font = font(13);
+            ctx.fillStyle = token('fg');
+            ctx.textAlign = 'left';
+            ctx.fillText(label, 0, mid, labelW - 12);
+
+            ctx.fillStyle = token('bg-2');
+            ctx.fillRect(labelW, mid - bar / 2, trackW, bar);
+            ctx.fillStyle = (colorFor || entityColor)(label);
+            roundedBar(ctx, labelW, mid - bar / 2, (values[i] / maxVal) * trackW, bar, 4);
+
+            ctx.font = font(13, 'font-mono');
+            ctx.fillStyle = token('fg-2');
+            ctx.textAlign = 'right';
+            ctx.fillText(valueTexts[i], width, mid);
+        });
+    }
+
+    /**
+     * Requests per day as vertical bars with a hover tooltip.
+     * @param {string} canvasId
+     * @param {string[]} labels - YYYY-MM-DD
      * @param {number[]} values
      */
     function renderVerticalBarChart(canvasId, labels, values) {
         const canvas = document.getElementById(canvasId);
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
+        const height = 240;
+        const { ctx, width } = setup(canvas, height);
+        const padLeft = 48, padBottom = 28, padTop = 8;
+        const chartW = width - padLeft, chartH = height - padTop - padBottom;
+        const maxVal = niceMax(Math.max(...values, 1));
+        const slot = chartW / labels.length;
+        const barW = Math.max(2, Math.min(slot - 2, 32));
 
-        const padLeft = 60;
-        const padRight = 20;
-        const padTop = 20;
-        const padBottom = 60;
-        const width = canvas.parentElement.clientWidth - 32;
-        const height = 250;
-
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
-        canvas.style.width = width + 'px';
-        canvas.style.height = height + 'px';
-        ctx.scale(dpr, dpr);
-
-        const chartW = width - padLeft - padRight;
-        const chartH = height - padTop - padBottom;
-        const maxVal = Math.max(...values, 1);
-        const barWidth = Math.max(4, (chartW / labels.length) - 4);
-        const barGap = (chartW - barWidth * labels.length) / (labels.length + 1);
-
-        ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
-
-        // Y axis gridlines
-        const ySteps = 5;
-        ctx.strokeStyle = COLORS.gray;
-        ctx.fillStyle = COLORS.textLight;
-        ctx.textAlign = 'right';
+        // Recessive grid and axis labels
+        ctx.font = font(11, 'font-mono');
         ctx.textBaseline = 'middle';
-        for (let i = 0; i <= ySteps; i++) {
-            const val = Math.round((maxVal / ySteps) * i);
-            const y = padTop + chartH - (chartH * (val / maxVal));
-            ctx.beginPath();
-            ctx.moveTo(padLeft, y);
-            ctx.lineTo(padLeft + chartW, y);
-            ctx.stroke();
-            ctx.fillText(val.toLocaleString(), padLeft - 8, y);
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 4; i++) {
+            const v = (maxVal / 4) * i;
+            const y = padTop + chartH - (v / maxVal) * chartH;
+            ctx.fillStyle = token('line');
+            ctx.fillRect(padLeft, Math.round(y) + 0.5, chartW, 1);
+            ctx.fillStyle = token('fg-3');
+            ctx.fillText(Math.round(v).toLocaleString(), padLeft - 8, y);
         }
 
-        // Bars
-        for (let i = 0; i < labels.length; i++) {
-            const x = padLeft + barGap + i * (barWidth + barGap);
-            const barH = (values[i] / maxVal) * chartH;
-            const y = padTop + chartH - barH;
-
-            ctx.fillStyle = COLORS.green;
-            ctx.fillRect(x, y, barWidth, barH);
-
-            // Date label
+        const bars = labels.map((label, i) => {
+            const x = padLeft + i * slot + (slot - barW) / 2;
+            const h = (values[i] / maxVal) * chartH;
+            return { x, y: padTop + chartH - h, w: barW, h, label, value: values[i] };
+        });
+        ctx.fillStyle = token('series-1');
+        for (const b of bars) {
             ctx.save();
-            ctx.fillStyle = COLORS.textLight;
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'top';
-            ctx.translate(x + barWidth / 2, padTop + chartH + 8);
-            ctx.rotate(-Math.PI / 4);
-            // Show short date: MM-DD
-            const shortLabel = labels[i].substring(5);
-            ctx.fillText(shortLabel, 0, 0);
+            ctx.translate(b.x, b.y + b.h);
+            ctx.rotate(-Math.PI / 2);
+            roundedBar(ctx, 0, 0, b.h, b.w, 4); // drawn sideways: rounded top only
             ctx.restore();
         }
+
+        // Date labels without collisions: every n-th day
+        ctx.fillStyle = token('fg-3');
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        const every = Math.ceil(44 / slot);
+        bars.forEach((b, i) => {
+            if (i % every === 0) ctx.fillText(b.label.slice(5), b.x + b.w / 2, padTop + chartH + 8);
+        });
+
+        canvas.onmousemove = (e) => {
+            const r = canvas.getBoundingClientRect();
+            const i = Math.floor((e.clientX - r.left - padLeft) / slot);
+            if (i < 0 || i >= bars.length) return Tooltip.hide();
+            Tooltip.show(e, bars[i].label + ': ' + bars[i].value.toLocaleString() + ' requests');
+        };
+        canvas.onmouseleave = Tooltip.hide;
     }
 
-    /**
-     * Render a D3 donut/pie chart with a legend below.
-     * @param {string} containerId - Container div element ID
-     * @param {string[]} labels - Slice labels
-     * @param {number[]} values - Slice values
-     * @param {number} total - Total for percentage calculation
-     */
-    function renderPieChart(containerId, labels, values, total) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        container.innerHTML = '';
-
-        const PIE_GREENS = [
-            '#1a4d15', '#276120', '#3d7a35', '#4a8c3f',
-            '#5ea854', '#7ab864', '#8bc34a', '#a8d467',
-        ];
-
-        const w = container.clientWidth || 300;
-        const pieD = Math.min(w, 200);
-        const r = pieD / 2 - 4;
-
-        const pie = d3.pie().sort(null).value(d => d);
-        const arc = d3.arc().innerRadius(r * 0.38).outerRadius(r);
-        const arcs = pie(values);
-
-        const svg = d3.select(container)
-            .append('svg')
-            .attr('viewBox', `0 0 ${w} ${pieD}`)
-            .attr('width', '100%')
-            .style('display', 'block');
-
-        const g = svg.append('g')
-            .attr('transform', `translate(${w / 2},${pieD / 2})`);
-
-        g.selectAll('path')
-            .data(arcs)
-            .join('path')
-            .attr('d', arc)
-            .attr('fill', (d, i) => PIE_GREENS[i % PIE_GREENS.length])
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 1.5)
-            .append('title')
-            .text((d, i) => {
-                const pct = total > 0 ? ' (' + ((values[i] / total) * 100).toFixed(1) + '%)' : '';
-                return labels[i] + ': ' + values[i].toLocaleString() + pct;
-            });
-
-        // Legend
-        const legend = document.createElement('div');
-        legend.className = 'pie-legend';
-        for (let i = 0; i < labels.length; i++) {
-            const pct = total > 0 ? ((values[i] / total) * 100).toFixed(1) + '%' : '';
-            const item = document.createElement('div');
-            item.className = 'pie-legend-item';
-            // Built via DOM APIs: the CSP blocks inline style attributes.
-            const swatch = legendSpan('pie-legend-swatch', '');
-            swatch.style.background = PIE_GREENS[i % PIE_GREENS.length];
-            item.append(swatch, legendSpan('pie-legend-label', labels[i]), legendSpan('pie-legend-pct', pct));
-            legend.appendChild(item);
-        }
-        container.appendChild(legend);
+    function niceMax(v) {
+        const mag = Math.pow(10, Math.floor(Math.log10(v)));
+        for (const m of [1, 2, 2.5, 5, 10]) if (m * mag >= v) return m * mag;
+        return 10 * mag;
     }
 
-    function legendSpan(className, text) {
-        const span = document.createElement('span');
-        span.className = className;
-        span.textContent = text;
-        return span;
-    }
+    return { renderBarChart, renderVerticalBarChart, statusColor, entityColor, token };
+})();
 
-    return { renderBarChart, renderVerticalBarChart, renderPieChart };
+/** One shared tooltip for charts and the map. */
+const Tooltip = (() => {
+    const el = () => document.getElementById('tooltip');
+    return {
+        show(event, text) {
+            const t = el();
+            t.textContent = text;
+            t.hidden = false;
+            t.style.left = (event.clientX + 12) + 'px';
+            t.style.top = (event.clientY - 32) + 'px';
+        },
+        hide() { el().hidden = true; },
+    };
 })();

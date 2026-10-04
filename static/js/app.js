@@ -2,18 +2,19 @@
  * CaddyShack — main application logic.
  */
 (function () {
-    const uploadZone    = document.getElementById('upload-zone');
-    const fileInput     = document.getElementById('file-input');
-    const dashboard     = document.getElementById('dashboard');
-    const loading       = document.getElementById('loading');
-    const hostSelect    = document.getElementById('host-select');
-    const fileSelector  = document.getElementById('file-selector');
-    const fileSelect    = document.getElementById('file-select');
+    const $ = (id) => document.getElementById(id);
+    const fileInput    = $('file-input');
+    const dashboard    = $('dashboard');
+    const emptyState   = $('empty-state');
+    const hostSelect   = $('host-select');
+    const fileSelector = $('file-selector');
+    const fileSelect   = $('file-select');
 
     // Reference to the currently loaded file (used for all re-analysis calls).
     let fileRef = null; // { type: 'uploaded', id } | { type: 'local', name }
     let uploadedFile = null; // { name, size } — display only
     let serverLogFiles = [];
+    let lastReport = null; // redrawn on resize and theme change
 
     // Filter state — all conditions are ANDed on the backend.
     let currentHost      = '';
@@ -26,10 +27,12 @@
     let currentPage      = null;
     let currentMethod    = null;
     let currentSearch    = '';
-    let ignoreStatic     = false;
-    let ignoreImages     = false;
-    let ignoreMonitors   = true;  // uptime checks: hidden by default
-    let ignoreBots       = true;  // crawlers, link previews: hidden by default
+    // All exclusions are on by default: the first view shows page traffic
+    // from people. Scripts have no exclusion, so probes always stay visible.
+    let ignoreStatic     = true;
+    let ignoreImages     = true;
+    let ignoreMonitors   = true;
+    let ignoreBots       = true;
 
     let dateDebounceTimer = null;
 
@@ -40,43 +43,69 @@
     let eventsLoading  = false;
     let eventsDirty    = true;
 
+    // ── Status line and messages ──────────────────────────────────────────────
+
+    function setBusy(text) {
+        $('status').textContent = text || '';
+        dashboard.classList.toggle('is-loading', Boolean(text));
+    }
+
+    function showMessage(text) {
+        $('message').textContent = text;
+        $('message').hidden = false;
+    }
+
+    function clearMessage() { $('message').hidden = true; }
+
+    function fileLabel() {
+        if (!fileRef) return '';
+        return fileRef.type === 'uploaded' ? uploadedFile.name : fileRef.name;
+    }
+
     // ── File loading ──────────────────────────────────────────────────────────
 
-    uploadZone.addEventListener('dragover', (e) => {
+    // The whole page accepts a dropped log file.
+    document.addEventListener('dragover', (e) => {
         e.preventDefault();
-        uploadZone.classList.add('dragover');
+        document.body.classList.add('dragging');
     });
-    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-    uploadZone.addEventListener('drop', (e) => {
+    document.addEventListener('dragleave', (e) => {
+        if (!e.relatedTarget) document.body.classList.remove('dragging');
+    });
+    document.addEventListener('drop', (e) => {
         e.preventDefault();
-        uploadZone.classList.remove('dragover');
+        document.body.classList.remove('dragging');
         if (e.dataTransfer.files.length > 0) startUpload(e.dataTransfer.files[0]);
     });
     fileInput.addEventListener('change', () => {
         if (fileInput.files.length > 0) startUpload(fileInput.files[0]);
+        fileInput.value = '';
     });
 
     async function startUpload(file) {
-        uploadedFile = { name: file.name, size: file.size };
-        const form = new FormData();
-        form.append('logfile', file);
-
         resetFilters();
-        loading.classList.remove('hidden');
-        dashboard.classList.add('hidden');
+        clearMessage();
+        setBusy('Uploading and analyzing ' + file.name + '…');
         try {
-            const resp = await fetch('/api/upload?' + buildFilterQuery(), { method: 'POST', body: form });
-            if (!resp.ok) throw new Error(await resp.text() || resp.statusText);
+            const resp = await fetch('/api/upload?' + buildFilterQuery(), { method: 'POST', body: form(file) });
+            if (!resp.ok) throw new Error((await resp.text()).trim() || resp.statusText);
             const result = await resp.json();
+            uploadedFile = { name: file.name, size: file.size };
             fileRef = { type: 'uploaded', id: result.file_id };
             rebuildFileSelector();
             fileSelect.value = 'uploaded';
             applyResult(result);
         } catch (err) {
-            alert('Error analyzing log file: ' + err.message);
+            showMessage('Could not analyze ' + file.name + ': ' + err.message + '. Check that it is a Caddy JSON access log.');
         } finally {
-            loading.classList.add('hidden');
+            setBusy('');
         }
+    }
+
+    function form(file) {
+        const f = new FormData();
+        f.append('logfile', file);
+        return f;
     }
 
     async function loadLocalFile(name) {
@@ -112,7 +141,7 @@
             fileSelect.appendChild(grp);
         }
 
-        fileSelector.classList.toggle('hidden', fileSelect.options.length === 0);
+        fileSelector.hidden = fileSelect.options.length === 0;
     }
 
     fileSelect.addEventListener('change', async () => {
@@ -126,9 +155,10 @@
     });
 
     async function init() {
+        activateTab(location.hash === '#events' ? 'events' : 'statistics');
         try {
             const resp = await fetch('/api/logs');
-            if (resp.ok) serverLogFiles = await resp.json();
+            if (resp.ok) serverLogFiles = (await resp.json()) || [];
         } catch (_) {}
 
         rebuildFileSelector();
@@ -136,10 +166,29 @@
         if (serverLogFiles.length > 0) {
             fileSelect.value = 'server:' + serverLogFiles[0].name;
             await loadLocalFile(serverLogFiles[0].name);
+        } else {
+            emptyState.hidden = false;
         }
     }
 
     init();
+
+    // ── About ─────────────────────────────────────────────────────────────────
+
+    const about = $('about');
+    $('about-open').addEventListener('click', openAbout);
+    if (location.hash === '#about') openAbout(); // deep link, like the view tabs
+    async function openAbout() {
+        if (!about.open) about.showModal();
+        if ($('about-version').textContent) return;
+        try {
+            const resp = await fetch('/api/health');
+            const { version } = await resp.json();
+            $('about-version').textContent = version === 'dev' ? 'Development build' : 'Version ' + version;
+        } catch (_) {}
+    }
+    // A click on the backdrop (the dialog element itself, outside its box) closes it.
+    about.addEventListener('click', (e) => { if (e.target === about) about.close(); });
 
     // ── Fetch & render ────────────────────────────────────────────────────────
 
@@ -160,10 +209,10 @@
         if (currentBrowser)   p.set('browser', currentBrowser);
         if (currentOS)        p.set('os',      currentOS);
         if (currentPage)      p.set('page',    currentPage);
-        if (currentMethod)         p.set('method',  currentMethod);
-        if (currentSearch.trim())  p.set('search',  currentSearch.trim());
-        if (ignoreStatic)          p.set('ignore_static', '1');
-        if (ignoreImages)     p.set('ignore_images',  '1');
+        if (currentMethod)    p.set('method',  currentMethod);
+        if (currentSearch.trim()) p.set('search', currentSearch.trim());
+        if (ignoreStatic)     p.set('ignore_static',   '1');
+        if (ignoreImages)     p.set('ignore_images',   '1');
         if (ignoreMonitors)   p.set('ignore_monitors', '1');
         if (ignoreBots)       p.set('ignore_bots',     '1');
         return p;
@@ -171,15 +220,15 @@
 
     async function doFetch() {
         if (!fileRef) return;
-        loading.classList.remove('hidden');
+        setBusy('Analyzing ' + fileLabel() + '…');
         try {
             const resp = await fetch('/api/analyze?' + buildQuery());
-            if (!resp.ok) throw new Error(await resp.text() || resp.statusText);
+            if (!resp.ok) throw new Error((await resp.text()).trim() || resp.statusText);
             applyResult(await resp.json());
         } catch (err) {
-            alert('Error: ' + err.message);
+            showMessage('Could not analyze ' + fileLabel() + ': ' + err.message + '.');
         } finally {
-            loading.classList.add('hidden');
+            setBusy('');
         }
         // Mark events as stale; reload immediately if on events tab.
         eventsDirty = true;
@@ -192,8 +241,10 @@
     }
 
     function applyResult(result) {
+        clearMessage();
         populateHostDropdown(result.hosts || []);
-        dashboard.classList.remove('hidden');
+        emptyState.hidden = true;
+        dashboard.hidden = false;
         renderDashboard(result.report);
         if (activeTab === 'events' && eventsDirty) loadEvents(true);
     }
@@ -211,96 +262,120 @@
         currentPage      = null;
         currentMethod    = null;
         currentSearch    = '';
-        ignoreStatic     = false;
-        ignoreImages     = false;
+        ignoreStatic     = true;
+        ignoreImages     = true;
         ignoreMonitors   = true;
         ignoreBots       = true;
 
         hostSelect.value = '';
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
-        document.getElementById('date-start').value = '';
-        document.getElementById('date-end').value   = '';
-        document.getElementById('country-filter').value = '';
-        document.getElementById('browser-filter').value = '';
-        document.getElementById('os-filter').value      = '';
-        document.getElementById('page-filter').value    = '';
-        document.getElementById('method-filter').value  = '';
-        document.getElementById('search-filter').value  = '';
-        document.getElementById('ignore-static').checked = false;
-        document.getElementById('ignore-images').checked  = false;
-        document.getElementById('ignore-monitors').checked = true;
-        document.getElementById('ignore-bots').checked     = true;
+        setStatusButtons('all');
+        for (const id of ['date-start', 'date-end', 'country-filter', 'browser-filter',
+                          'os-filter', 'page-filter', 'method-filter', 'search-filter']) {
+            $(id).value = '';
+        }
+        $('ignore-static').checked   = true;
+        $('ignore-images').checked   = true;
+        $('ignore-monitors').checked = true;
+        $('ignore-bots').checked     = true;
 
         eventsOffset  = 0;
         eventsTotal   = 0;
         eventsLoading = false;
         eventsDirty   = true;
-        const tbody = document.getElementById('events-tbody');
-        if (tbody) tbody.innerHTML = '';
+        $('events-tbody').innerHTML = '';
         setEventsStatus('');
     }
 
     // ── Render ────────────────────────────────────────────────────────────────
 
     function renderDashboard(data) {
-        if (!data) { alert('Error: Invalid report data'); return; }
+        if (!data) { showMessage('The server returned no report.'); return; }
+        lastReport = data;
 
-        document.getElementById('total-requests').textContent = (data.total_requests || 0).toLocaleString();
-        document.getElementById('unique-ips').textContent     = (data.unique_ips     || 0).toLocaleString();
-        document.getElementById('total-bytes').textContent    = formatBytes(data.total_bytes || 0);
-        document.getElementById('avg-response').textContent   = ((data.avg_response_ms || 0).toFixed(1)) + ' ms';
+        $('total-requests').textContent = (data.total_requests || 0).toLocaleString();
+        $('unique-ips').textContent     = (data.unique_ips     || 0).toLocaleString();
+        $('total-bytes').textContent    = formatBytes(data.total_bytes || 0);
+        $('avg-response').textContent   = (data.avg_response_ms || 0).toFixed(1) + ' ms';
 
-        if (data.browsers && data.browsers.length > 0) {
-            Charts.renderPieChart('browser-chart',
-                data.browsers.map(b => b.name), data.browsers.map(b => b.count),
-                data.total_requests);
-        }
-        if (data.operating_systems && data.operating_systems.length > 0) {
-            Charts.renderPieChart('os-chart',
-                data.operating_systems.map(o => o.name), data.operating_systems.map(o => o.count),
-                data.total_requests);
-        }
-        if (data.status_codes && data.status_codes.length > 0) {
-            Charts.renderBarChart('status-chart',
-                data.status_codes.map(s => s.name), data.status_codes.map(s => s.count),
-                data.total_requests, '#8bc34a');
-        }
-        if (data.daily_traffic && data.daily_traffic.length > 0) {
-            Charts.renderVerticalBarChart('daily-chart',
-                data.daily_traffic.map(d => d.date), data.daily_traffic.map(d => d.count));
-        }
+        // Canvas text needs the web fonts; draw once they are ready.
+        document.fonts.ready.then(() => renderCharts(data));
 
         const total = data.total_requests || 0;
         renderTable('country-table', data.countries || [], c => [
-            c.name, c.code, (c.count || 0).toLocaleString(),
+            countryName(c.name, c.code), c.code === '??' ? '—' : c.code, (c.count || 0).toLocaleString(),
             total > 0 ? ((c.count / total) * 100).toFixed(1) + '%' : '0%'
         ]);
-        if (data.countries && data.countries.length > 0) {
-            WorldMap.render('map-container', data.countries);
-        }
         // DB-IP Lite (CC BY 4.0) requires a link wherever its results are shown.
-        document.getElementById('geoip-attribution').hidden =
-            !(data.countries || []).some(c => c.code && c.code !== '??');
+        const resolved = (data.countries || []).some(c => c.code && c.code !== '??');
+        $('geoip-attribution').hidden = !resolved;
+        $('geoip-missing').hidden = resolved || (data.countries || []).length === 0;
 
         renderTable('pages-table', data.top_pages || [], p => [
-            truncate(p.name, 60, p.name), (p.count || 0).toLocaleString()
+            truncate(p.name, 60), (p.count || 0).toLocaleString()
         ]);
         renderTable('visitors-table', data.top_visitors || [], v => [
-            v.ip, v.country_name + ' (' + v.country + ')', v.count.toLocaleString()
+            v.ip, v.country === '??' ? 'Unknown' : v.country_name + ' (' + v.country + ')', v.count.toLocaleString()
         ]);
         renderTable('referrers-table', data.top_referrers || [], r => [
-            truncate(r.name, 60, r.name), (r.count || 0).toLocaleString()
+            truncate(r.name, 60), (r.count || 0).toLocaleString()
         ], 'No external referrers for the current filters.');
 
         populateDimensionDropdowns(data);
-        updateFilterHints();
+        updateFilterSummary();
     }
+
+    function renderCharts(data) {
+        const total = data.total_requests || 0;
+        const bars = (id, items, colorFor) => {
+            clearEmptyChart(id);
+            if (items.length === 0) return emptyChart(id);
+            Charts.renderBarChart(id, items.map(x => x.name), items.map(x => x.count), total, colorFor);
+        };
+        bars('browser-chart', data.browsers || [], Charts.entityColor);
+        bars('os-chart', data.operating_systems || [], Charts.entityColor);
+        bars('status-chart', data.status_codes || [], Charts.statusColor);
+
+        const days = data.daily_traffic || [];
+        clearEmptyChart('daily-chart');
+        if (days.length === 0) emptyChart('daily-chart');
+        else Charts.renderVerticalBarChart('daily-chart', days.map(d => d.date), days.map(d => d.count));
+
+        if (data.countries && data.countries.length > 0) WorldMap.render('map-container', data.countries);
+        else $('map-container').innerHTML = '<p class="map-unavailable">No data for the current filters.</p>';
+    }
+
+    function emptyChart(id) {
+        const canvas = $(id);
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        canvas.style.height = '0px';
+        let note = canvas.nextElementSibling;
+        if (!note || !note.classList.contains('chart-empty')) {
+            note = document.createElement('p');
+            note.className = 'chart-empty table-empty';
+            canvas.after(note);
+        }
+        note.textContent = 'No data for the current filters.';
+    }
+
+    function clearEmptyChart(id) {
+        const note = $(id).nextElementSibling;
+        if (note && note.classList.contains('chart-empty')) note.remove();
+    }
+
+    // Redraw charts when the width or the color scheme changes.
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { if (lastReport) renderCharts(lastReport); }, 150);
+    });
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (lastReport) renderCharts(lastReport);
+    });
 
     // ── Host dropdown ─────────────────────────────────────────────────────────
 
     function populateHostDropdown(hosts) {
-        hostSelect.innerHTML = '<option value="">All Sites</option>';
+        hostSelect.innerHTML = '<option value="">All sites</option>';
         for (const h of hosts) {
             const opt = document.createElement('option');
             opt.value = h;
@@ -321,36 +396,41 @@
         doFetch();
     });
 
-    // ── Status filter buttons ─────────────────────────────────────────────────
+    // ── Status segment group ──────────────────────────────────────────────────
 
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    function setStatusButtons(value) {
+        document.querySelectorAll('.status-btn').forEach(b =>
+            b.setAttribute('aria-pressed', String(b.dataset.filter === value)));
+    }
+
+    document.querySelectorAll('.status-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             if (!fileRef) return;
-            currentStatus = btn.getAttribute('data-filter');
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            currentStatus = btn.dataset.filter;
+            setStatusButtons(currentStatus);
             doFetch();
         });
     });
 
     // ── Date range inputs ─────────────────────────────────────────────────────
 
-    document.getElementById('date-start').addEventListener('change', function () {
+    $('date-start').addEventListener('change', function () {
         currentDateStart = this.value || null;
         scheduleFetch();
     });
-    document.getElementById('date-end').addEventListener('change', function () {
+    $('date-end').addEventListener('change', function () {
         currentDateEnd = this.value || null;
         scheduleFetch();
     });
-    document.getElementById('date-clear').addEventListener('click', () => {
+    $('date-clear').addEventListener('click', () => {
         if (!fileRef) return;
         currentDateStart = null;
         currentDateEnd   = null;
-        document.getElementById('date-start').value = '';
-        document.getElementById('date-end').value   = '';
+        $('date-start').value = '';
+        $('date-end').value   = '';
         doFetch();
     });
+    $('filters').addEventListener('submit', (e) => e.preventDefault());
 
     // ── Dimension dropdowns ───────────────────────────────────────────────────
 
@@ -368,7 +448,7 @@
     }
 
     function rebuildDimSelect(id, values, resetFn, truncateLen) {
-        const sel = document.getElementById(id);
+        const sel = $(id);
         const prev = sel.value;
         while (sel.options.length > 1) sel.remove(1);
         for (const v of values) {
@@ -386,118 +466,58 @@
         }
     }
 
-    document.getElementById('country-filter').addEventListener('change', function () {
+    const onChange = (id, apply, debounce) => $(id).addEventListener(debounce ? 'input' : 'change', function () {
         if (!fileRef) return;
-        currentCountry = this.value || null;
-        doFetch();
+        apply(this);
+        debounce ? scheduleFetch() : doFetch();
     });
-    document.getElementById('browser-filter').addEventListener('change', function () {
-        if (!fileRef) return;
-        currentBrowser = this.value || null;
-        doFetch();
-    });
-    document.getElementById('os-filter').addEventListener('change', function () {
-        if (!fileRef) return;
-        currentOS = this.value || null;
-        doFetch();
-    });
-    document.getElementById('page-filter').addEventListener('change', function () {
-        if (!fileRef) return;
-        currentPage = this.value || null;
-        doFetch();
-    });
-    document.getElementById('method-filter').addEventListener('change', function () {
-        if (!fileRef) return;
-        currentMethod = this.value || null;
-        doFetch();
-    });
-    document.getElementById('search-filter').addEventListener('input', function () {
-        if (!fileRef) return;
-        currentSearch = this.value;
-        scheduleFetch();
-    });
-    document.getElementById('ignore-static').addEventListener('change', function () {
-        if (!fileRef) return;
-        ignoreStatic = this.checked;
-        doFetch();
-    });
-    document.getElementById('ignore-images').addEventListener('change', function () {
-        if (!fileRef) return;
-        ignoreImages = this.checked;
-        doFetch();
-    });
-    document.getElementById('ignore-monitors').addEventListener('change', function () {
-        if (!fileRef) return;
-        ignoreMonitors = this.checked;
-        doFetch();
-    });
-    document.getElementById('ignore-bots').addEventListener('change', function () {
-        if (!fileRef) return;
-        ignoreBots = this.checked;
-        doFetch();
-    });
+    onChange('country-filter',  el => { currentCountry = el.value || null; });
+    onChange('browser-filter',  el => { currentBrowser = el.value || null; });
+    onChange('os-filter',       el => { currentOS      = el.value || null; });
+    onChange('page-filter',     el => { currentPage    = el.value || null; });
+    onChange('method-filter',   el => { currentMethod  = el.value || null; });
+    onChange('search-filter',   el => { currentSearch  = el.value; }, true);
+    onChange('ignore-static',   el => { ignoreStatic   = el.checked; });
+    onChange('ignore-images',   el => { ignoreImages   = el.checked; });
+    onChange('ignore-monitors', el => { ignoreMonitors = el.checked; });
+    onChange('ignore-bots',     el => { ignoreBots     = el.checked; });
 
-    // ── Filter hints ──────────────────────────────────────────────────────────
+    // ── Filter summary (one line for all views) ───────────────────────────────
 
-    function updateFilterHints() {
+    function updateFilterSummary() {
         const date = (currentDateStart || currentDateEnd)
-            ? (currentDateStart || '…') + ' – ' + (currentDateEnd || '…')
-            : null;
-        const pageLabel = currentPage
-            ? (currentPage.length > 40 ? currentPage.slice(0, 40) + '…' : currentPage)
-            : null;
+            ? (currentDateStart || '…') + ' – ' + (currentDateEnd || '…') : null;
+        const statusLabel = currentStatus === 'success' ? 'success (2xx)'
+            : currentStatus === 'error' ? 'errors (4xx–5xx)' : null;
+        const page = currentPage && currentPage.length > 40 ? currentPage.slice(0, 40) + '…' : currentPage;
 
-        const statusLabel = currentStatus === 'success' ? 'Success (2xx)'
-            : currentStatus === 'error' ? 'Errors (4xx–5xx)' : null;
+        const only = [currentHost || null, statusLabel, date, currentCountry, currentBrowser,
+                      currentOS, page, currentMethod,
+                      currentSearch.trim() ? 'matching “' + currentSearch.trim() + '”' : null].filter(Boolean);
+        const without = [ignoreStatic && 'static files', ignoreImages && 'images',
+                         ignoreMonitors && 'monitors', ignoreBots && 'bots'].filter(Boolean);
 
-        const allTags = [currentHost || null, statusLabel, date, currentCountry,
-                         currentBrowser, currentOS, pageLabel, currentMethod,
-                         currentSearch.trim() || null,
-                         ignoreStatic ? 'No static files' : null,
-                         ignoreImages  ? 'No images'       : null,
-                         ignoreMonitors ? 'No monitors'    : null,
-                         ignoreBots    ? 'No bots'         : null]
-            .filter(Boolean);
-
-        for (const id of ['hint-cards', 'hint-daily', 'hint-map', 'hint-countries',
-                          'hint-browsers', 'hint-oses', 'hint-status', 'hint-pages',
-                          'hint-visitors', 'hint-referrers', 'hint-events']) {
-            setHint(id, allTags);
-        }
+        let text = only.length ? 'Showing ' + only.join(' · ') : 'Showing all requests';
+        if (without.length) text += ', without ' + listJoin(without);
+        $('filter-summary').textContent = text + '.';
     }
 
-    function setHint(id, activeTags) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.innerHTML = '';
-        if (activeTags.length === 0) {
-            const tag = document.createElement('span');
-            tag.className = 'filter-tag filter-tag--none';
-            tag.textContent = 'all data';
-            el.appendChild(tag);
-        } else {
-            for (const text of activeTags) {
-                const tag = document.createElement('span');
-                tag.className = 'filter-tag filter-tag--active';
-                tag.textContent = text;
-                el.appendChild(tag);
-            }
-        }
-    }
+    // ── Views (links, so back button and deep links work) ─────────────────────
 
-    // ── Tab switching ─────────────────────────────────────────────────────────
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tab = btn.getAttribute('data-tab');
-            if (tab === activeTab) return;
-            activeTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('tab-statistics').classList.toggle('hidden', tab !== 'statistics');
-            document.getElementById('tab-events').classList.toggle('hidden', tab !== 'events');
-            if (tab === 'events' && eventsDirty) loadEvents(true);
+    function activateTab(tab) {
+        activeTab = tab;
+        document.querySelectorAll('.tabs a').forEach(a => {
+            if (a.dataset.tab === tab) a.setAttribute('aria-current', 'page');
+            else a.removeAttribute('aria-current');
         });
+        $('tab-statistics').hidden = tab !== 'statistics';
+        $('tab-events').hidden = tab !== 'events';
+        if (tab === 'events' && eventsDirty) loadEvents(true);
+        if (tab === 'statistics' && lastReport) renderCharts(lastReport); // canvas width was 0 while hidden
+    }
+
+    window.addEventListener('hashchange', () => {
+        activateTab(location.hash === '#events' ? 'events' : 'statistics');
     });
 
     // ── Single events ─────────────────────────────────────────────────────────
@@ -507,10 +527,10 @@
         if (reset) {
             eventsOffset = 0;
             eventsTotal  = 0;
-            document.getElementById('events-tbody').innerHTML = '';
+            $('events-tbody').innerHTML = '';
         }
         eventsLoading = true;
-        setEventsStatus('Loading…');
+        setEventsStatus('Loading events…');
 
         const p = buildQuery();
         p.set('offset', eventsOffset);
@@ -518,7 +538,7 @@
 
         try {
             const resp = await fetch('/api/events?' + p);
-            if (!resp.ok) throw new Error(await resp.text() || resp.statusText);
+            if (!resp.ok) throw new Error((await resp.text()).trim() || resp.statusText);
             const result = await resp.json();
             eventsTotal = result.total;
             appendEventRows(result.events || []);
@@ -526,31 +546,32 @@
             eventsDirty = false;
             updateEventsStatus();
         } catch (err) {
-            setEventsStatus('Error loading events: ' + err.message);
+            setEventsStatus('Could not load events: ' + err.message + '.');
         } finally {
             eventsLoading = false;
         }
     }
 
     function appendEventRows(events) {
-        const tbody = document.getElementById('events-tbody');
+        const tbody = $('events-tbody');
         for (const ev of events) {
             const tr = document.createElement('tr');
-            if (ev.status >= 400) tr.classList.add('error-row');
+            const isError = ev.status >= 400;
+            if (isError) tr.className = 'is-error';
 
             const cells = [
-                { text: ev.ts, cls: 'ts' },
+                { text: ev.ts.replace('T', ' ').replace(/\.\d+Z$/, ''), cls: 'mono', title: ev.ts },
                 { text: ev.method },
                 { text: ev.host },
-                { text: ev.uri, cls: 'uri', title: ev.uri },
-                { text: String(ev.status), cls: ev.status >= 400 ? 'status-err' : '' },
-                { text: formatBytes(ev.size) },
-                { text: ev.duration_ms.toFixed(1) + ' ms' },
-                { text: ev.ip },
-                { text: ev.country_name || ev.country },
+                { text: ev.uri, cls: 'wrap', title: ev.uri },
+                { text: String(ev.status), cls: 'num' + (isError ? ' status-error' : '') },
+                { text: formatBytes(ev.size), cls: 'num' },
+                { text: ev.duration_ms.toFixed(1) + ' ms', cls: 'num' },
+                { text: ev.ip, cls: 'mono' },
+                { text: countryName(ev.country_name, ev.country) },
                 { text: ev.browser },
                 { text: ev.os },
-                { text: ev.referer || '', cls: 'uri', title: ev.referer || '' },
+                { text: ev.referer || '', cls: 'wrap', title: ev.referer || '' },
             ];
 
             for (const c of cells) {
@@ -570,43 +591,38 @@
         } else if (eventsOffset >= eventsTotal) {
             setEventsStatus('All ' + eventsTotal.toLocaleString() + ' events loaded.');
         } else {
-            setEventsStatus('Showing ' + eventsOffset.toLocaleString() + ' of ' + eventsTotal.toLocaleString() + ' events — scroll for more');
+            setEventsStatus('Showing ' + eventsOffset.toLocaleString() + ' of ' + eventsTotal.toLocaleString() + ' events. Scroll to load more.');
         }
     }
 
-    function setEventsStatus(msg) {
-        const el = document.getElementById('events-status');
-        if (el) el.textContent = msg;
-    }
+    function setEventsStatus(msg) { $('events-status').textContent = msg; }
 
     // Lazy-load more events when the sentinel scrolls into view.
-    const sentinel = document.getElementById('events-sentinel');
-    if (sentinel) {
-        const observer = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && eventsOffset < eventsTotal && !eventsLoading) {
-                loadEvents(false);
-            }
-        }, { rootMargin: '200px' });
-        observer.observe(sentinel);
-    }
+    new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && eventsOffset < eventsTotal && !eventsLoading) {
+            loadEvents(false);
+        }
+    }, { rootMargin: '200px' }).observe($('events-sentinel'));
 
     // ── Utilities ─────────────────────────────────────────────────────────────
 
+    // Columns whose header has class "num" are right-aligned, tabular numbers.
     function renderTable(tableId, items, rowFn, emptyText = 'No data for the current filters.') {
-        const table = document.getElementById(tableId);
+        const table = $(tableId);
+        const numeric = [...table.querySelectorAll('thead th')].map(th => th.classList.contains('num'));
         const tbody = table.querySelector('tbody');
         tbody.innerHTML = '';
         if (items.length === 0) {
             const td = document.createElement('td');
             td.className = 'table-empty';
-            td.colSpan = table.querySelectorAll('thead th').length;
+            td.colSpan = numeric.length;
             td.textContent = emptyText;
             tbody.appendChild(document.createElement('tr')).appendChild(td);
             return;
         }
         for (const item of items) {
             const tr = document.createElement('tr');
-            for (const val of rowFn(item)) {
+            rowFn(item).forEach((val, i) => {
                 const td = document.createElement('td');
                 if (val && typeof val === 'object' && val.text !== undefined) {
                     td.textContent = val.text;
@@ -614,20 +630,30 @@
                 } else {
                     td.textContent = val;
                 }
+                if (numeric[i]) td.className = 'num';
                 tr.appendChild(td);
-            }
+            });
             tbody.appendChild(tr);
         }
     }
 
-    function truncate(str, maxLen, fullValue) {
+    // "??" is the backend's code for "no country known".
+    function countryName(name, code) {
+        return code === '??' || !code ? 'Unknown' : (name || code);
+    }
+
+    function listJoin(items) {
+        return items.length < 2 ? items.join('') : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
+    }
+
+    function truncate(str, maxLen) {
         if (str.length <= maxLen) return str;
-        return { text: str.slice(0, maxLen) + '…', title: fullValue };
+        return { text: str.slice(0, maxLen) + '…', title: str };
     }
 
     function formatBytes(bytes) {
-        if (bytes < 1024)             return bytes + ' B';
-        if (bytes < 1024 * 1024)      return (bytes / 1024).toFixed(1) + ' KiB';
+        if (bytes < 1024)               return bytes + ' B';
+        if (bytes < 1024 * 1024)        return (bytes / 1024).toFixed(1) + ' KiB';
         if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MiB';
         return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GiB';
     }

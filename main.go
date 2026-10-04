@@ -18,6 +18,9 @@ import (
 //go:embed static
 var staticFiles embed.FS
 
+// version is set at build time: go build -ldflags "-X main.version=v1.2.3".
+var version = "dev"
+
 const csp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
 func securityHeaders(next http.Handler) http.Handler {
@@ -30,6 +33,7 @@ func securityHeaders(next http.Handler) http.Handler {
 func main() {
 	addr := flag.String("addr", ":8080", "listen address")
 	geodb := flag.String("geodb", "./data/dbip-country-lite.csv", "path to DB-IP country CSV")
+	logDir := flag.String("logdir", "/var/log/caddy", "directory of server-side Caddy logs")
 	uploadTTL := flag.Duration("upload-ttl", time.Hour, "delete uploaded logs not used for this long")
 	flag.Parse()
 	if *uploadTTL <= 0 {
@@ -37,6 +41,8 @@ func main() {
 	}
 
 	geoip.Load(*geodb)
+	handler.SetLogDir(*logDir)
+	handler.SetVersion(version)
 	handler.StartUploadCleanup(*uploadTTL)
 
 	mux := http.NewServeMux()

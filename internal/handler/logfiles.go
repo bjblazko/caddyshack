@@ -10,7 +10,11 @@ import (
 	"time"
 )
 
-const logDir = "/var/log/caddy"
+// logDir holds the server-side Caddy logs offered for analysis.
+var logDir = "/var/log/caddy"
+
+// SetLogDir changes the directory of server-side logs (flag -logdir).
+func SetLogDir(dir string) { logDir = dir }
 
 // LogFileInfo describes one server-side log file offered for analysis.
 type LogFileInfo struct {
@@ -28,7 +32,7 @@ func LogFiles(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	var files []LogFileInfo
+	files := []LogFileInfo{} // encodes as [] rather than null when empty
 	for _, e := range entries {
 		if e.IsDir() {
 			continue

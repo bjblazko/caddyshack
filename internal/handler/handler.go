@@ -59,8 +59,17 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// version is the release this binary was built from, shown in the About
+// dialog; "dev" for local builds.
+var version = "dev"
+
+// SetVersion sets the version reported by Health (set via -ldflags in main).
+func SetVersion(v string) { version = v }
+
 // Health handles GET /api/health.
 func Health(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte(`{"status":"ok"}`))
+	if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok", "version": version}); err != nil {
+		log.Printf("Error encoding health response: %v", err)
+	}
 }

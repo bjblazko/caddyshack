@@ -2,8 +2,7 @@
  * WorldMap module — D3.js world map with bubble overlay sized by request count.
  */
 const WorldMap = (() => {
-    let tooltip = null;
-    let svgNode = null;
+    const token = Charts.token;
 
     // ISO 3166-1 numeric → alpha-2 mapping (for TopoJSON which uses numeric IDs)
     const numToAlpha2 = {
@@ -65,7 +64,6 @@ const WorldMap = (() => {
     function render(containerId, countries) {
         const container = document.getElementById(containerId);
         if (!container) return;
-        tooltip = document.getElementById('map-tooltip');
 
         // Build count lookup by alpha-2 code
         const countMap = {};
@@ -90,9 +88,8 @@ const WorldMap = (() => {
                 .attr('width', width)
                 .attr('height', height)
                 .attr('viewBox', `0 0 ${width} ${height}`)
-                .style('background', '#f8fbff');
-
-            svgNode = svg.node();
+                .attr('role', 'img')
+                .attr('aria-label', 'Requests by country; the table lists the same data');
 
             const projection = d3.geoNaturalEarth1()
                 .fitSize([width - 20, height - 20], { type: 'Sphere' })
@@ -106,33 +103,24 @@ const WorldMap = (() => {
                 .data(geoCountries.features)
                 .join('path')
                 .attr('d', path)
-                .attr('fill', '#e8e8e8')
-                .attr('stroke', '#ccc')
-                .attr('stroke-width', 0.5);
+                .attr('fill', token('bg-2'))
+                .attr('stroke', 'none');
 
             // Draw borders
             svg.append('path')
                 .datum(borders)
                 .attr('d', path)
                 .attr('fill', 'none')
-                .attr('stroke', '#bbb')
+                .attr('stroke', token('line'))
                 .attr('stroke-width', 0.5);
-
-            // Graticule
-            svg.append('path')
-                .datum(d3.geoGraticule10())
-                .attr('d', path)
-                .attr('fill', 'none')
-                .attr('stroke', '#e0e8f0')
-                .attr('stroke-width', 0.3);
 
             // Outline
             svg.append('path')
                 .datum({ type: 'Sphere' })
                 .attr('d', path)
                 .attr('fill', 'none')
-                .attr('stroke', '#aaa')
-                .attr('stroke-width', 0.8);
+                .attr('stroke', token('line'))
+                .attr('stroke-width', 1);
 
             // Bubbles
             const bubbleData = [];
@@ -168,21 +156,17 @@ const WorldMap = (() => {
                 .attr('cx', d => d.x)
                 .attr('cy', d => d.y)
                 .attr('r', d => radiusScale(d.count))
-                .attr('fill', 'rgba(74, 140, 63, 0.55)')
-                .attr('stroke', '#2d5a27')
-                .attr('stroke-width', 0.8)
-                .on('mouseenter', (event, d) => {
-                    tooltip.textContent = `${d.name} (${d.code}): ${d.count.toLocaleString()} requests`;
-                    tooltip.classList.remove('hidden');
-                    d3.select(event.target).attr('fill', 'rgba(139, 195, 74, 0.75)');
-                })
-                .on('mousemove', (event) => {
-                    tooltip.style.left = (event.clientX + 14) + 'px';
-                    tooltip.style.top = (event.clientY - 10) + 'px';
+                .attr('fill', token('series-1'))
+                .attr('fill-opacity', 0.45)
+                .attr('stroke', token('bg'))   // surface ring between overlapping bubbles
+                .attr('stroke-width', 1.5)
+                .on('mousemove', (event, d) => {
+                    Tooltip.show(event, `${d.name} (${d.code}): ${d.count.toLocaleString()} requests`);
+                    d3.select(event.target).attr('fill-opacity', 0.8);
                 })
                 .on('mouseleave', (event) => {
-                    tooltip.classList.add('hidden');
-                    d3.select(event.target).attr('fill', 'rgba(74, 140, 63, 0.55)');
+                    Tooltip.hide();
+                    d3.select(event.target).attr('fill-opacity', 0.45);
                 });
 
             // Legend
@@ -194,7 +178,8 @@ const WorldMap = (() => {
                 ].filter((v, i, a) => a.indexOf(v) === i && v > 0);
 
                 const legend = svg.append('g')
-                    .attr('transform', `translate(${width - 80}, ${height - 20 - legendValues.length * 28})`);
+                    // bottom left lies over the Pacific, clear of land
+                    .attr('transform', `translate(${maxRadius + 16}, ${height - 20 - legendValues.length * 28})`);
 
                 legend.selectAll('circle')
                     .data(legendValues)
@@ -203,8 +188,8 @@ const WorldMap = (() => {
                     .attr('cy', (d, i) => i * 28)
                     .attr('r', d => radiusScale(d))
                     .attr('fill', 'none')
-                    .attr('stroke', '#2d5a27')
-                    .attr('stroke-width', 0.8);
+                    .attr('stroke', token('fg-3'))
+                    .attr('stroke-width', 1);
 
                 legend.selectAll('text')
                     .data(legendValues)
@@ -212,11 +197,12 @@ const WorldMap = (() => {
                     .attr('x', maxRadius + 8)
                     .attr('y', (d, i) => i * 28 + 4)
                     .text(d => d.toLocaleString())
-                    .attr('font-size', '10px')
-                    .attr('fill', '#666');
+                    .attr('font-size', '11px')
+                    .attr('font-family', token('font-mono'))
+                    .attr('fill', token('fg-3'));
             }
         }).catch(() => {
-            container.innerHTML = '<p class="map-unavailable">World map data not available</p>';
+            container.innerHTML = '<p class="map-unavailable">The world map could not be loaded. The country table shows the same data.</p>';
         });
     }
 

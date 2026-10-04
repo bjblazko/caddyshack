@@ -7,9 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- About dialog: version, who makes CaddyShack, links to the product page on huepattl.de, the GitHub repository and huepattl.de, what happens to your data, license and no-warranty statement
+- "Licenses and thanks" page (`/licenses.html`) listing every built-in project with its use, license, website and license text, generated from `static/licenses/credits.json`; replaces `/licenses.txt`
+- `/api/health` reports the version, stamped into release binaries and container images at build time
+- `-logdir` flag for the directory of server-side logs (default `/var/log/caddy`)
+- Empty state when no log is loaded; "Unknown" country with a hint when no GeoIP database is configured
+
 ### Changed
 
+- All exclusions are on by default in the dashboard: static files and images are now hidden too, like monitors and bots, so the first view shows page traffic. Untick them to include those requests; the API still includes everything unless asked
+- Redesigned interface following huepattl-rams-design: neutral surfaces with light and dark mode, IBM Plex Sans/Mono (self-hosted, OFL), flat panels, one primary action ("Upload log file"); colors in charts carry meaning
+- Browsers and operating systems shown as ranked bars instead of donut charts; each entity keeps a fixed, color-vision-checked color, non-browsers are grey; status codes in green (2xx) and red (4xx/5xx) with their code as label
+- One filter summary sentence replaces the filter hint badges on every panel; view tabs are links (`#statistics`, `#events`); errors appear on the page instead of browser dialogs; a status line replaces the loading overlay
+- World map without graticule; size legend moved off land
 - CI workflow on every push to `main` and every pull request (gofmt, go vet, go test, govulncheck, JavaScript syntax); releases are only built and published when it passes
+
+### Fixed
+
+- `/api/logs` returned `null` instead of `[]` for an empty log directory, which broke the page start
 
 ## [0.4.1] - 2026-10-04
 

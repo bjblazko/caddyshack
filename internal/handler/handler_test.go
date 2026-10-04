@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/bjblazko/caddyshack/internal/analyzer"
@@ -135,5 +136,52 @@ func TestUploadAppliesFilterParams(t *testing.T) {
 	noBots := uploadWithQuery(t, "?ignore_bots=1&ignore_monitors=1").Report.TotalRequests
 	if all != 13 || noBots != 11 {
 		t.Errorf("total requests: all=%d (want 13), without bots=%d (want 11)", all, noBots)
+	}
+}
+
+func TestServerLogsFromConfiguredDir(t *testing.T) {
+	dir := t.TempDir()
+	data, err := os.ReadFile(fixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(dir+"/access.jsonl", data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	old := logDir
+	SetLogDir(dir)
+	t.Cleanup(func() { SetLogDir(old) })
+
+	if body := get(LogFiles, "/api/logs").Body.String(); !strings.Contains(body, `"access.jsonl"`) {
+		t.Errorf("log list = %s", body)
+	}
+	var res analyzer.AnalysisResult
+	if err := json.Unmarshal(get(Analyze, "/api/analyze?name=access.jsonl").Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+	if res.Report.TotalRequests != 13 {
+		t.Errorf("total requests = %d, want 13", res.Report.TotalRequests)
+	}
+}
+
+func TestLogFilesEmptyDirIsEmptyArray(t *testing.T) {
+	old := logDir
+	SetLogDir(t.TempDir())
+	t.Cleanup(func() { SetLogDir(old) })
+	if body := strings.TrimSpace(get(LogFiles, "/api/logs").Body.String()); body != "[]" {
+		t.Errorf("empty log dir: body = %q, want []", body)
+	}
+}
+
+func TestHealthReportsVersion(t *testing.T) {
+	old := version
+	SetVersion("v9.9.9")
+	t.Cleanup(func() { SetVersion(old) })
+	var got struct{ Status, Version string }
+	if err := json.Unmarshal(get(Health, "/api/health").Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != "ok" || got.Version != "v9.9.9" {
+		t.Errorf("health = %+v", got)
 	}
 }

@@ -99,9 +99,6 @@ Free, public-domain geographic dataset providing country boundaries at 110-metre
 **Bubble Map / Proportional Bubbles**
 The world map visualization: circles sized by request count using `d3.scaleSqrt()` so that area is proportional to count. Hovering a bubble shows a tooltip with the country name and count.
 
-**Graticule**
-The latitude/longitude grid lines drawn on the world map for geographic reference.
-
 **D3 Projection (geoNaturalEarth1)**
 The D3.js map projection that converts geographic coordinates (lat/lon) to SVG pixel coordinates, fitting the world to the container size.
 
@@ -125,7 +122,7 @@ Classification of a request by its User-Agent: *Browser*, *Monitor* (uptime and 
 Part of the Client Kind classification: user-agents containing `bot`, `spider`, `crawl` or a known crawler, preview or feed-reader token (case-insensitive) are "Bot" — unless a monitor rule matches first (UptimeRobot, Pingdom).
 
 **Monitor / Bot Exclusion**
-Filters `ignore_monitors=1` and `ignore_bots=1`. The UI enables both by default, so statistics show human traffic and scripts; unticking shows monitors or bots again. Scripts have no exclusion so scanner probes stay visible.
+Filters `ignore_monitors=1` and `ignore_bots=1`. The UI enables both by default (like the static files and images exclusions), so statistics show page requests from people and scripts; unticking shows monitors or bots again. Scripts have no exclusion so scanner probes stay visible.
 
 **ALPN (Application-Layer Protocol Negotiation)**
 TLS extension that negotiates the HTTP protocol version. Appears as `h2` (HTTP/2) or `http/1.1` in the `tls.proto` log field.
@@ -141,7 +138,7 @@ Maximum upload size enforced server-side via `MaxBytesReader`: 500 MB. Prevents 
 Non-page requests excluded from the "Top Pages" table. Identified by path prefix (`/css/`, `/js/`, `/img/`, `/fonts/`, `/api`) or file extension (`.css`, `.js`, `.png`, `.jpg`, `.svg`, `.ico`, `.woff`, `.woff2`, `.ttf`). Not to be confused with the Static Files and Images exclusion filters, which use their own lists.
 
 **Static Files / Images Exclusion**
-Optional filters (`ignore_static=1`, `ignore_images=1`) that remove requests from all statistics and the Single Events view. Static files: JS, CSS, source maps, fonts, `robots.txt`, `sitemap.xml`, and paths under `/css/`, `/js/`, `/fonts/`. Images: PNG, JPG/JPEG, GIF, SVG, WebP, ICO, BMP, AVIF, and paths under `/img/`, `/images/`. The query string is ignored when matching extensions.
+Filters (`ignore_static=1`, `ignore_images=1`) that remove requests from all statistics and the Single Events view; on by default in the UI, off unless requested in the API. Static files: JS, CSS, source maps, fonts, `robots.txt`, `sitemap.xml`, and paths under `/css/`, `/js/`, `/fonts/`. Images: PNG, JPG/JPEG, GIF, SVG, WebP, ICO, BMP, AVIF, and paths under `/img/`, `/images/`. The query string is ignored when matching extensions.
 
 **Glob Search**
 Search filter (`search=`) matched case-insensitively against URI, client IP and Referer. `*` matches any number of characters; without `*` the value must match exactly.
@@ -172,13 +169,19 @@ The form under which requests to one site are grouped: the `Host` header in lowe
 UI control to switch between virtual hosts found in a multi-host log. Defaults to "All Sites" (aggregate view).
 
 **Canvas 2D API**
-HTML5 canvas used for rendering bar charts (horizontal and vertical). Chosen for pixel-level control without a charting library dependency. The browser and OS donut charts use D3 (SVG).
+HTML5 canvas used for all bar charts: ranked horizontal bars (browsers, operating systems, status codes) and vertical bars (daily traffic). Chosen for pixel-level control without a charting library dependency. Colors are read from the CSS tokens at draw time.
 
 **DPR (Device Pixel Ratio)**
 `window.devicePixelRatio` used to scale canvas rendering for high-DPI (Retina) displays, keeping charts crisp.
 
 **Chart Namespace**
-JavaScript module object (`Charts`) exposing `renderBarChart()`, `renderVerticalBarChart()` and `renderPieChart()`. Encapsulates all chart logic.
+JavaScript module object (`Charts`) exposing `renderBarChart()`, `renderVerticalBarChart()` and the color rules `entityColor()` / `statusColor()`. A shared `Tooltip` serves charts and map.
+
+**Entity Color**
+Fixed chart color per browser or OS name (Chrome always blue, Windows always blue, …), so filters that change the ranking never repaint an entity. Non-browser clients (Bot, Monitor, Script, Other) stay grey.
+
+**Filter Summary**
+The one sentence under the filters that states what all views show, e.g. "Showing example.com, without monitors and bots." Replaced the per-panel filter hint badges.
 
 **WorldMap Namespace**
 JavaScript module object (`WorldMap`) exposing `render()`. Encapsulates all D3 map rendering logic.
@@ -190,7 +193,7 @@ Floating UI element that appears on hover (e.g. over a map bubble), positioned u
 D3.js, TopoJSON, and geographic data are served locally from `/vendor/` and `/data/`. No external CDN requests are made.
 
 **Drag-and-Drop Upload**
-The primary file upload mechanism. A JSONL file is dropped onto the upload zone (or selected via file picker), converted to `FormData`, and POSTed to `/api/upload`.
+A log file dropped anywhere on the page is uploaded, the same as choosing it with "Upload log file". It is sent as `FormData` to `/api/upload`.
 
 **Multipart Form Data**
 The HTTP encoding used for file uploads. The file field name is `logfile`. Parsed server-side with `r.ParseMultipartForm()`.
@@ -221,7 +224,10 @@ Frontend files (HTML, CSS, JS, vendor libraries, geographic data) compiled into 
 Docker build strategy with separate builder and runtime stages. The builder compiles a static Go binary; the runtime stage is `scratch` with only the binary, the project LICENSE and an empty `/tmp`.
 
 **Licenses and Notices**
-`static/licenses.txt`, embedded and served at `/licenses.txt`: CaddyShack's license, the no-warranty statement, the Caddy trademark note and the license texts of every third-party component built in. Linked from the dashboard footer.
+The page `/licenses.html` ("Licenses and thanks"), rendered from `static/licenses/credits.json`: every project CaddyShack is built on with its use, license, website and embedded license text, plus CaddyShack's own license, the no-warranty statement and the Caddy trademark note. Linked from the About dialog and the footer.
+
+**About Dialog**
+The dialog opened by "About" (or `#about`): version, who makes CaddyShack, links to the product page, GitHub and huepattl.de, what happens to your data, license.
 
 **GHCR (GitHub Container Registry)**
 Where CaddyShack Docker images are published. Images are built for `linux/amd64` and `linux/arm64`.

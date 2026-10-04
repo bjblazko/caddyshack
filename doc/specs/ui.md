@@ -1,147 +1,202 @@
 # Spec: UI & Visuals
 
+## Design System
+
+The UI follows **huepattl-rams-design** (Dieter Rams' principles applied to
+software): neutral warm surfaces, color only as a signal, flat surfaces
+separated by hairlines, one type family, one spacing scale.
+
+- `static/css/tokens.css` — the design system's reference tokens, copied
+  unchanged. Light and dark mode follow the OS (`prefers-color-scheme`).
+- `static/css/style.css` — layout and components; uses only `var(--…)`
+  values from the tokens, plus the chart colors below.
+- Fonts: IBM Plex Sans (400/500/600) for UI and text, IBM Plex Mono (400/500)
+  for numbers, IPs and timestamps, with tabular numerals. IBM's own Latin-1
+  WOFF2 subsets, self-hosted in `static/fonts/` with `OFL.txt`.
+
+**Primary job of the screen:** see what traffic a Caddy log contains — how
+much, from where, for what — narrowed by filters. The only element in the
+accent color is **Upload log file**.
+
+### Deviations from huepattl-rams-design
+
+| Deviation | Reason |
+|---|---|
+| Charts use categorical colors (`--series-1` … `--series-7`) | Browsers and operating systems must be told apart at a glance; neutral or single-hue bars were not distinguishable. Slots come from the validated dataviz reference palette (light and dark checked with its validator against `--bg`; all hard gates pass). Used only inside charts, always with a visible label. Slot 8 (red) is omitted so red keeps meaning "needs attention". |
+
+### Signal colors in charts
+
+| Color | Meaning |
+|---|---|
+| `--series-N` per entity | Fixed per browser/OS name (Chrome blue, Firefox orange, Safari aqua, Brave yellow, Opera magenta, Vivaldi green, Edge violet; Windows blue, macOS aqua, Linux yellow, ChromeOS magenta, Android green, iOS violet), so a filter that changes the ranking never repaints an entity |
+| `--fg-3` (grey) | Not a browser: Bot, Monitor, Script, Other |
+| `--series-1` (blue) | Magnitude: daily traffic bars, map bubbles |
+| `--confirm` | 2xx status codes |
+| `--warning` | 4xx and 5xx status codes (always next to the code as label) |
+
 ## Technology
 
 - Vanilla HTML5, CSS3, JavaScript (ES2020+) — no framework, no build step, no npm
-- Canvas 2D API for bar charts (daily traffic, status codes)
-- D3.js v7 for the world map and browser/OS donut charts (served locally, no CDN)
+- Canvas 2D API for bar charts (browsers, operating systems, status codes, daily traffic)
+- D3.js v7 for the world map only (served locally, no CDN)
 - topojson-client v3 for country boundary rendering (served locally, no CDN)
 - Natural Earth 110m TopoJSON for country boundaries
 
-## Dashboard Layout
+## Layout
 
-Single-page application (`index.html`). All sections hidden until a log file is loaded.
+Single-page application (`index.html`).
 
-### Sections (top to bottom)
+1. **Header** — logo, name, "Log file" select (server logs and the uploaded
+   file), **About** (quiet button), **Upload log file** (primary button), a
+   status line ("Analyzing …") while a request runs. A file can also be dropped
+   anywhere on the page.
+2. **Message** — errors in plain words below the header (`role="alert"`),
+   replacing browser `alert()` dialogs.
+3. **Empty state** — "No log file loaded" with one sentence on what to do,
+   shown when no server log is readable and nothing was uploaded.
+4. **Filters** — labels above controls, all 36 px high; status as a segment
+   group (`aria-pressed`), see table below.
+5. **Filter summary** — one sentence for all views, e.g. "Showing example.com ·
+   success (2xx), without static files, images, monitors and bots."
+6. **View tabs** — links `#statistics` and `#events` (back button and deep
+   links work), current view marked with `aria-current="page"`.
+7. **Statistics** — key figures (requests, unique IPs, transferred, average
+   response; 4 columns, 2 on narrow screens), then panels in two columns:
+   world map + countries, browsers + operating systems, daily traffic (full
+   width), status codes + top URIs, top visitors + top external referrers.
+8. **Single events** — filtered log entries newest first, loaded 100 at a time
+   while scrolling; rows with status ≥ 400 have a warning tint and the status in
+   `--warning-ink`.
+9. **Footer** — see below.
 
-1. **Header** — logo, title, subtitle, drag-and-drop upload zone
-2. **Filter bar** — host dropdown, Success/Error/All toggle, date range inputs, Country/Browser/OS/Page/Method dropdowns, search input, static/image exclusion checkboxes
-3. **Summary Cards** (4-column desktop / 2-column mobile) — total requests, unique IPs, data transferred, avg response time
-4. **World Map + Countries** (2-column) — D3 bubble map left, country table right
-5. **Browsers + Operating Systems** (2-column) — D3.js donut charts with green-palette slices and a percentage legend
-6. **Daily Traffic** (full-width) — vertical bar chart on `<canvas>`
-7. **Status Codes + Top Pages** (2-column) — bar chart and table
-8. **Top Visitors** (full-width) — table with anonymized IPs, country, count
-9. **Top External Referrers** (full-width) — table of referrers from outside the sites in the log
+Panels are flat with a 1 px `--line` border and `--radius-md`; nothing has a
+shadow except the floating tooltip.
 
-A second tab, **Single Events**, lists the filtered log entries newest first with infinite scrolling.
+### States
+
+| State | Shown as |
+|---|---|
+| No file | Empty state |
+| Loading | Status line in the header names the file; dashboard at 50 % opacity |
+| Error | Message bar: what failed and what to do |
+| Empty table | One muted line: "No data for the current filters." (referrers: "No external referrers for the current filters.") |
+| Empty chart | The same sentence in place of the canvas |
+| No GeoIP database | Countries read "Unknown"; a note under the map names the `-geodb` flag |
 
 ### Footer
 
-Always visible below the dashboard, muted small text: "no telemetry, no
-external requests", the license with the no-warranty statement, a link to
-`/licenses.txt`, and the Caddy trademark note. When any country code other
-than `??` is shown, it starts with "IP geolocation by DB-IP" linking to
-db-ip.com, as the DB-IP Lite license (CC BY 4.0) requires.
+Always visible, muted small text: "no telemetry, no external requests", the
+license with the no-warranty statement, a link to **Licenses and thanks**
+(`/licenses.html`), and the
+Caddy trademark note. When any country is resolved, it starts with "IP
+geolocation by DB-IP" linking to db-ip.com, as the DB-IP Lite license
+(CC BY 4.0) requires.
 
-### Empty Tables
+### About dialog
 
-A table without rows shows one muted line (`--text-light`) spanning all
-columns: "No data for the current filters." The referrers table says "No
-external referrers for the current filters."
+Native `<dialog>` (`#about`), opened by **About** or the URL `#about`; Esc,
+Close and a click on the backdrop close it. Content: name and version (from
+`/api/health`), what CaddyShack does, *Made by* Timo Böwing with links to the
+product page on huepattl.de, the GitHub repository and huepattl.de, *Your
+data* (no outbound requests, uploads deleted after the idle time, IPs
+shortened), *License* (Apache-2.0, no warranty, link to Licenses and thanks).
+The only element with a shadow besides the tooltip; backdrop `--scrim`.
 
-### Responsive Breakpoint
+### Licenses and thanks
+
+`/licenses.html` renders `static/licenses/credits.json` (`js/licenses.js`): an
+intro with CaddyShack's own license and the no-warranty sentence, then
+*Built into CaddyShack* and *Data*, each entry with name and version, what it
+does here, its license, and links *Website* and *License text* (and *Support
+the project* where one exists — none of the current projects has one). The
+Caddy trademark note closes the page.
+
+### Responsive
 
 | Viewport | Layout |
 |----------|--------|
-| > 768px | 2-column grids, 4-column card row |
-| ≤ 768px | Single-column, 2-column card row |
+| > 960 px | Two-column panels, four key figures in a row |
+| ≤ 960 px | One column of panels |
+| ≤ 640 px | Full-width fields stacked, two key figures per row, 16 px gutter; no horizontal scrolling |
 
-## Filter Bar
+Charts redraw on window resize and when the color scheme changes.
 
-All filter controls are rendered in a single `.filter-bar` row above the summary cards.
+## Filters
 
 | Control | Element | State variable | Effect |
 |---------|---------|----------------|--------|
-| Host | `<select id="host-select">` | `currentHost` | Scopes to one virtual host; `""` = all hosts |
-| Status | Toggle buttons (All / Success / Error) | `currentStatus` | `""` / `"success"` / `"error"` |
-| Start date | `<input type="date" id="date-start">` | `currentDateStart` | Inclusive lower bound (`YYYY-MM-DD`) |
-| End date | `<input type="date" id="date-end">` | `currentDateEnd` | Inclusive upper bound (`YYYY-MM-DD`) |
-| Date clear | Button `#date-clear` | — | Resets both date inputs |
-| Country | `<select id="country-filter" class="dim-filter-select">` | `currentCountry` | Country name exact match |
-| Browser | `<select id="browser-filter" class="dim-filter-select">` | `currentBrowser` | Browser name exact match |
-| OS | `<select id="os-filter" class="dim-filter-select">` | `currentOS` | OS name exact match |
-| Page | `<select id="page-filter" class="dim-filter-select">` | `currentPage` | URI exact match |
-| HTTP Method | `<select id="method-filter" class="dim-filter-select">` | `currentMethod` | HTTP method exact match (e.g. `GET`, `POST`) |
-| Search | `<input id="search-filter">` | `currentSearch` | Glob over URI, IP, referrer (400ms debounce) |
-| Exclude: Static files | `<input type="checkbox" id="ignore-static">` | `ignoreStatic` | Off by default |
-| Exclude: Images | `<input type="checkbox" id="ignore-images">` | `ignoreImages` | Off by default |
-| Exclude: Monitors | `<input type="checkbox" id="ignore-monitors">` | `ignoreMonitors` | **On** by default; re-set on every new file |
-| Exclude: Bots | `<input type="checkbox" id="ignore-bots">` | `ignoreBots` | **On** by default; re-set on every new file |
+| Site | `<select id="host-select">` | `currentHost` | One canonical host; `""` = all |
+| Status | Segment group `.status-btn` | `currentStatus` | `all` / `success` / `error` |
+| Date range | `#date-start`, `#date-end`, clear button `#date-clear` | `currentDateStart`, `currentDateEnd` | Inclusive bounds (`YYYY-MM-DD`) |
+| Country | `<select id="country-filter">` | `currentCountry` | Country name exact match |
+| Browser | `<select id="browser-filter">` | `currentBrowser` | Browser name exact match |
+| Operating system | `<select id="os-filter">` | `currentOS` | OS name exact match |
+| URI | `<select id="page-filter">` | `currentPage` | URI exact match |
+| Method | `<select id="method-filter">` | `currentMethod` | HTTP method exact match |
+| Search | `<input id="search-filter">` | `currentSearch` | Glob over URI, IP, referrer (400 ms debounce); placeholder shows examples |
+| Exclude: Static files | `#ignore-static` | `ignoreStatic` | **On** by default; re-set on every new file |
+| Exclude: Images | `#ignore-images` | `ignoreImages` | **On** by default; re-set on every new file |
+| Exclude: Monitors | `#ignore-monitors` | `ignoreMonitors` | **On** by default; re-set on every new file |
+| Exclude: Bots | `#ignore-bots` | `ignoreBots` | **On** by default; re-set on every new file |
 
-Scripts (curl, scanners …) deliberately have no exclusion so probing requests stay visible.
-The upload request carries the same filter params, so the first view already honours the defaults.
+Scripts (curl, scanners …) deliberately have no exclusion so probing requests
+stay visible. The upload request carries the same filter params, so the first
+view already honours the defaults.
 
-Every filter change triggers `doFetch()`, which sends all active filter params to `GET /api/analyze` and re-renders the entire dashboard from the backend response. Date inputs use a 400ms debounce (`scheduleFetch`) to avoid rapid requests while typing.
+Every filter change triggers `doFetch()`, which sends all active filter params
+to `GET /api/analyze` and re-renders the dashboard from the backend response.
 
 ### Dimension Dropdown Repopulation
 
-After each `GET /api/analyze` response, `populateDimensionDropdowns(report)` rebuilds the dimension selects from the returned report's `countries`, `browsers`, `operating_systems`, `top_pages`, and `methods` arrays. These arrays already reflect the current host, status, and date filters, so the dimension dropdowns never show stale or out-of-range values. If the previously selected value is no longer present, the dropdown resets to "All" and the state variable is cleared.
-
-## Filter Hints
-
-Every dashboard panel has a `<div class="filter-hint">` element. After each render, `updateFilterHints()` inspects the active filter state and writes a pill badge per panel:
-
-- **Active filter** → green pill (`.filter-tag--active`) showing the active filter value
-- **No filter** → muted italic text (`.filter-tag--none`) reading "all data"
+After each response, `populateDimensionDropdowns(report)` rebuilds the
+dimension selects from the report's `countries`, `browsers`,
+`operating_systems`, `top_pages` and `methods`. If the previously selected
+value is no longer present, the select resets to "All" and the state variable
+is cleared.
 
 ## JavaScript Modules
 
 ### `app.js`
 
-Main orchestrator. Handles:
-- Drag-and-drop and file input events
-- `FormData` construction and `POST /api/upload`; stores returned `file_id` as `fileRef`
-- `GET /api/analyze` with all active filter params via `buildQuery()` / `doFetch()`
-- 400ms debounce (`scheduleFetch`) for date inputs
-- Loading overlay during fetch
-- DOM population of tables and section visibility via `renderDashboard(data)`
-- Host dropdown population (`populateHostDropdown`) and dimension dropdown population (`populateDimensionDropdowns`)
-- Filter hint rendering (`updateFilterHints`)
-- Full filter reset on new file load (`resetFilters`)
+File loading (upload, drop, server log select), filter state and query
+building, `GET /api/analyze` and `/api/events`, rendering of key figures and
+tables (`renderTable` right-aligns columns whose header has class `num`),
+charts via `renderCharts`, the filter summary, view switching by URL hash,
+status line and messages. No client-side re-aggregation.
 
-No client-side re-aggregation is performed. The backend always returns a fully aggregated `AnalysisResult` for the current filter combination.
+### `charts.js` — `Charts` and `Tooltip`
 
-### `charts.js` — `Charts` namespace
+- `Charts.renderBarChart(canvasId, labels, values, total, colorFor)` — ranked
+  horizontal bars: label, 12 px bar with 4 px rounded end on a `--bg-2` track,
+  count and share in mono; `colorFor(label)` picks the bar color
+- `Charts.renderVerticalBarChart(canvasId, labels, values)` — requests per day,
+  recessive grid, date labels thinned to avoid collisions, hover tooltip per day
+- `Charts.entityColor`, `Charts.statusColor` — color rules above
+- Colors are read from CSS custom properties at draw time (`Charts.token`)
+- `Tooltip.show(event, text)` / `Tooltip.hide()` — one shared floating tooltip
 
-- `Charts.renderBarChart(canvasId, labels, values, total, color)` — horizontal bar chart with percentage labels; DPR-scaled for Retina displays
-- `Charts.renderVerticalBarChart(canvasId, labels, values)` — vertical bar chart with Y-axis gridlines and rotated date labels; DPR-scaled
-- `Charts.renderPieChart(containerId, labels, values, total)` — D3.js donut chart rendered into a `<div>`; slices use eight shades of green (`#1a4d15` → `#a8d467`); native `<title>` tooltip on each slice; percentage legend rendered below as flex-wrapped pills
+### `map.js` — `WorldMap`
 
-### `map.js` — `WorldMap` namespace
-
-- `WorldMap.render(containerId, countries)` — fetches `/data/countries-110m.json`, renders country outlines with D3 Natural Earth projection, overlays proportional bubbles at country centroids
-- Bubble sizing: `d3.scaleSqrt()` for area-proportional representation
-- Hover tooltip: country name + request count, positioned at `clientX/Y`
-- Legend with reference bubble sizes (bottom-right)
-- Graticule (lat/lon grid) as a reference layer
-
-## Color Scheme
-
-| CSS Variable | Hex | Usage |
-|---|---|---|
-| `--green-dark` | `#2d5a27` | Header background, headings, card value text |
-| `--green-mid` | `#4a8c3f` | Card top border, table header border, browser chart bars |
-| `--green-light` | `#8bc34a` | Upload zone highlight, file label, status chart bars |
-| `--green-pale` | `#e8f5e9` | Table row hover, active filter tag background |
-| `--bg` | `#f5f5f5` | Page background |
-| `--card-bg` | `#ffffff` | Cards and panels |
-
-Map bubble fill: `rgba(74, 140, 63, 0.55)` with dark green stroke.
+- Natural Earth projection; land in `--bg-2`, borders and outline in `--line`
+- Bubbles at country centroids, area-proportional (`d3.scaleSqrt`), blue with a
+  surface-colored ring so overlapping bubbles stay separable; hover tooltip
+- Size legend bottom left (over the Pacific)
 
 ## File Upload
 
-- Drag-and-drop onto the upload zone or click to open the file picker
-- File converted to `FormData` (field name: `logfile`) and POSTed as `multipart/form-data`
-- On success the returned `file_id` is stored; subsequent filter changes re-analyze the same temp file via `GET /api/analyze?file=<id>`
-- Loading overlay shown during analysis; hidden on response
+- "Upload log file" opens the picker; dropping a file anywhere also uploads it
+- Sent as `multipart/form-data` (field `logfile`) to `POST /api/upload` with
+  the current filter params; the returned `file_id` is used for later requests
+- An expired upload shows the server's message asking to upload again
 
 ## Vendored Assets
 
-All served locally from `static/` — no external requests at runtime.
+All served locally from `static/` — no external requests at runtime; license
+texts linked from `/licenses.html`.
 
 | File | Version |
 |------|---------|
-| `vendor/d3.min.js` | 7.x |
-| `vendor/topojson-client.min.js` | 3.x |
-| `data/countries-110m.json` | Natural Earth 110m |
+| `vendor/d3.min.js` | 7.9.0 |
+| `vendor/topojson-client.min.js` | 3.1.0 |
+| `data/countries-110m.json` | world-atlas 2.0.2 (Natural Earth 110m) |
+| `fonts/IBMPlex*-Latin1.woff2` | IBM Plex Sans 1.1.0, IBM Plex Mono 2.5.0 |

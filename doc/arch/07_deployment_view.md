@@ -83,6 +83,7 @@ graph LR
 |------|---------|-------------|
 | `-addr` | `:8080` | TCP listen address |
 | `-geodb` | `./data/dbip-country-lite.csv` | Path to DB-IP Lite CSV |
+| `-logdir` | `/var/log/caddy` | Directory of server-side Caddy logs offered under "Log file" |
 
 ---
 

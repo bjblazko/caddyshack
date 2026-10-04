@@ -85,12 +85,15 @@ List log files available on the server (from `/var/log/caddy`).
 
 ### `GET /api/health`
 
-Health check.
+Health check; also tells the About dialog which release is running.
 
 **Response** `200 OK`
 ```json
-{ "status": "ok" }
+{ "status": "ok", "version": "v0.5.0" }
 ```
+
+`version` is set at build time (`-ldflags "-X main.version=…"`; the release
+workflow and Dockerfile pass the tag); local builds report `dev`.
 
 ---
 

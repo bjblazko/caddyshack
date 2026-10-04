@@ -6,7 +6,7 @@
 graph TB
     subgraph Browser["Browser — Vanilla HTML/JS/CSS"]
         appjs["app.js\nupload, filter state & render"]
-        chartsjs["charts.js\nCanvas 2D bars · D3 donuts"]
+        chartsjs["charts.js\nCanvas 2D bar charts"]
         mapjs["map.js\nD3 geo bubbles"]
     end
 
@@ -60,8 +60,8 @@ No circular dependencies. Each package has a single responsibility.
 
 | Module | Responsibility |
 |--------|---------------|
-| `app.js` | Main orchestrator: file upload, filter state management, `GET /api/analyze` on every filter change, Single Events tab with paginated `GET /api/events`, DOM population, dimension dropdown repopulation, filter hints |
-| `charts.js` (`Charts` namespace) | Canvas 2D horizontal and vertical bar charts with DPR scaling; D3 donut charts with legend for browsers and OS |
+| `app.js` | Main orchestrator: file upload, filter state management, `GET /api/analyze` on every filter change, Single Events tab with paginated `GET /api/events`, DOM population, dimension dropdown repopulation, filter summary, status line and messages |
+| `charts.js` (`Charts` namespace) | Canvas 2D ranked horizontal bars and daily vertical bars with DPR scaling; entity and status colors from CSS tokens; shared tooltip |
 | `map.js` (`WorldMap` namespace) | D3.js Natural Earth bubble map with proportional sizing and hover tooltips |
 
 ### Key Data Types

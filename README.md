@@ -8,7 +8,7 @@ A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access log
 
 *Statistics overview*
 
-![Statistics dashboard — summary cards, world map, browser & OS donut charts, daily traffic, status codes, top pages and visitors](doc/screenshot-statistics.png)
+![Statistics dashboard — key figures, world map, browser and OS bars, daily traffic, status codes, top pages and visitors](doc/screenshot-statistics.png)
 
 *Single log entries*
 
@@ -16,10 +16,10 @@ A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access log
 
 ## Features
 
-- **Drag-and-drop upload** of Caddy JSONL access logs — no configuration needed, just drop the file
+- **Upload or drop** a Caddy JSONL access log anywhere on the page — no configuration needed
 - **Summary cards**: total requests, unique IPs, data transferred, and average response time at a glance
 - **World map** with proportional bubbles showing where your visitors come from (requires optional GeoIP database)
-- **Browser & OS statistics** with interactive D3.js donut charts (green palette) showing user-agent breakdowns
+- **Browser & OS statistics** as ranked bars; each browser and OS keeps its own color, non-browsers stay grey
 - **Daily traffic** trend chart to spot spikes and patterns over time
 - **HTTP status code** breakdown — see 2xx, 3xx, 4xx, and 5xx ratios visually
 - **Top pages** listing the most-visited URIs (static assets automatically excluded)
@@ -29,7 +29,8 @@ A web-based analytics dashboard for [Caddy](https://caddyserver.com/) access log
 - **Multi-host support** — analyze logs containing multiple virtual hosts, with per-host filtering
 - **Multi-dimension filtering** — filter by site, HTTP status range, date range, country, browser, OS, page, HTTP method, glob search (URI/IP/referrer), and optionally exclude static files or images; all filters applied on the backend with AND logic in a single streaming pass
 - **Monitor & bot filtering** — uptime checks (Uptime Kuma, UptimeRobot …) and crawlers, link previews and feed readers are recognised by User-Agent and hidden by default; one click shows them again. Scripts and scanners stay visible
-- **Filter hint badges** per panel — each chart and table shows which filters are currently active
+- **Filter summary** — one sentence states what all views currently show
+- **Calm, accessible interface** — light and dark mode, IBM Plex type, keyboard focus, works on narrow screens
 - **GDPR-compliant** IP anonymization: last octet zeroed for IPv4, prefix truncated for IPv6
 - **Offline-first frontend** — D3.js and TopoJSON are served locally, no CDN calls
 
@@ -94,6 +95,7 @@ Open [http://localhost:8080](http://localhost:8080) in your browser and upload a
 |------|---------|-------------|
 | `-addr` | `:8080` | Listen address (host:port) |
 | `-geodb` | `./data/dbip-country-lite.csv` | Path to DB-IP country-level CSV |
+| `-logdir` | `/var/log/caddy` | Directory of server-side Caddy logs (e.g. `-logdir testdata` to try it with the sample log) |
 | `-upload-ttl` | `1h` | Delete uploaded log files not used for this long (Go duration, e.g. `30m`) |
 
 ### GeoIP Setup (Optional)
@@ -182,7 +184,7 @@ Operating CaddyShack on access logs of a public website is processing of persona
 
 [Apache License 2.0](LICENSE). CaddyShack is provided without warranty, as far as the law allows.
 
-Third-party components built into the binary (D3.js, topojson-client, world-atlas — all ISC — and the Go runtime, BSD-3-Clause) are listed with their license texts in [`static/licenses.txt`](static/licenses.txt), which the running app also serves at `/licenses.txt`. Country boundaries derive from [Natural Earth](https://www.naturalearthdata.com) (public domain). Country data in the screenshots comes from IP geolocation by [DB-IP](https://db-ip.com) (CC BY 4.0).
+Third-party components built into the binary (D3.js, topojson-client, world-atlas — all ISC —, IBM Plex Sans and Mono under the SIL Open Font License, and the Go runtime, BSD-3-Clause) are listed in [`static/licenses/credits.json`](static/licenses/credits.json) with their license texts beside it. The running app shows them on its **Licenses and thanks** page (`/licenses.html`), linked from **About**. Country boundaries derive from [Natural Earth](https://www.naturalearthdata.com) (public domain). Country data in the screenshots comes from IP geolocation by [DB-IP](https://db-ip.com) (CC BY 4.0).
 
 ## Trademarks
 

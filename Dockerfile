@@ -3,7 +3,8 @@ WORKDIR /build
 COPY go.mod ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o caddyshack .
+ARG VERSION=dev
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o caddyshack .
 # scratch has no /tmp; uploads are stored in $TMPDIR/caddyshack
 RUN mkdir -m 1777 /tmp-root
 

@@ -3,219 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CaddyShack — Caddy Log Analyzer</title>
+    <title>CaddyShack — Caddy access log analyzer</title>
+    <link rel="stylesheet" href="/css/tokens.css">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <header>
-        <div class="header-brand">
-            <img src="/img/caddyshack-logo.png" alt="CaddyShack" class="logo">
-            <div>
-                <h1>CaddyShack</h1>
-                <p class="subtitle">Caddy Access Log Analyzer</p>
+    <header class="app-header">
+        <div class="brand">
+            <img src="/img/caddyshack-logo.png" alt="">
+            <span class="brand-name">CaddyShack</span>
+            <span class="brand-sub">Caddy access log analyzer</span>
+        </div>
+        <div class="file-controls">
+            <div class="field" id="file-selector" hidden>
+                <label for="file-select">Log file</label>
+                <span class="select"><select id="file-select"></select></span>
             </div>
+            <button type="button" id="about-open" class="btn btn-quiet" aria-haspopup="dialog">About</button>
+            <input type="file" id="file-input" class="visually-hidden" accept=".jsonl,.json,.log,.txt">
+            <label for="file-input" class="btn btn-primary">Upload log file</label>
         </div>
-        <div id="upload-zone" class="upload-zone">
-            <p>Drop a <code>.jsonl</code> log file here or <label for="file-input" class="file-label">browse</label></p>
-            <input type="file" id="file-input" accept=".jsonl,.json,.log,.txt">
-        </div>
-        <div id="file-selector" class="file-selector hidden">
-            <span class="file-selector-label">Loaded:</span>
-            <select id="file-select" class="file-select"></select>
-        </div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
     </header>
 
-    <main id="dashboard" class="hidden">
-        <div class="filter-bar">
-            <div class="filter-group">
-                <label class="filter-label" for="host-select">Site</label>
-                <select id="host-select" class="host-select">
-                    <option value="">All Sites</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label">HTTP Status Range</label>
-                <div class="filter-btns">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="success">Success (2xx)</button>
-                    <button class="filter-btn" data-filter="error">Errors (4xx–5xx)</button>
-                </div>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label">Date Range</label>
-                <div class="date-range-inputs">
-                    <input type="date" id="date-start" class="date-input">
-                    <span class="date-range-sep">–</span>
-                    <input type="date" id="date-end" class="date-input">
-                    <button id="date-clear" class="date-clear-btn" title="Clear date filter">✕</button>
-                </div>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label">Country</label>
-                <select id="country-filter" class="dim-filter-select">
-                    <option value="">All Countries</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label">Browser</label>
-                <select id="browser-filter" class="dim-filter-select">
-                    <option value="">All Browsers</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label">OS</label>
-                <select id="os-filter" class="dim-filter-select">
-                    <option value="">All OSes</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label">URI</label>
-                <select id="page-filter" class="dim-filter-select">
-                    <option value="">All URIs</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label">HTTP Method</label>
-                <select id="method-filter" class="dim-filter-select">
-                    <option value="">All Methods</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label class="filter-label" for="search-filter">Search</label>
-                <input type="text" id="search-filter" class="search-filter-input"
-                       placeholder="URI, IP or referrer…">
-            </div>
-            <div class="filter-group filter-group--checks">
-                <label class="filter-label">Exclude</label>
-                <div class="check-filters">
-                    <label class="check-filter">
-                        <input type="checkbox" id="ignore-static"> Static files
-                    </label>
-                    <label class="check-filter">
-                        <input type="checkbox" id="ignore-images"> Images
-                    </label>
-                    <label class="check-filter">
-                        <input type="checkbox" id="ignore-monitors" checked> Monitors
-                    </label>
-                    <label class="check-filter">
-                        <input type="checkbox" id="ignore-bots" checked> Bots
-                    </label>
-                </div>
-            </div>
-        </div>
+    <div id="message" class="message" role="alert" hidden></div>
 
-        <div class="tab-bar">
-            <button class="tab-btn active" data-tab="statistics">Statistics</button>
-            <button class="tab-btn" data-tab="events">Single events</button>
-        </div>
+    <section id="empty-state" class="empty-state" hidden>
+        <h1>No log file loaded</h1>
+        <p>Upload a Caddy JSON access log with “Upload log file”, or drop the file anywhere on this page.
+           Logs on this server appear under “Log file” when CaddyShack can read them.</p>
+    </section>
 
-        <div id="tab-statistics" class="tab-panel">
-            <div class="filter-hint" id="hint-cards"></div>
+    <main id="dashboard" hidden>
+        <form class="filters" id="filters" aria-label="Filters">
+            <div class="field">
+                <label for="host-select">Site</label>
+                <span class="select"><select id="host-select"><option value="">All sites</option></select></span>
+            </div>
+            <div class="field">
+                <span class="field-label" id="status-label">Status</span>
+                <div class="seg" role="group" aria-labelledby="status-label">
+                    <button type="button" class="status-btn" data-filter="all" aria-pressed="true">All</button>
+                    <button type="button" class="status-btn" data-filter="success" aria-pressed="false">Success (2xx)</button>
+                    <button type="button" class="status-btn" data-filter="error" aria-pressed="false">Errors (4xx–5xx)</button>
+                </div>
+            </div>
+            <div class="field">
+                <span class="field-label" id="date-label">Date range</span>
+                <div class="date-range" role="group" aria-labelledby="date-label">
+                    <input type="date" id="date-start" class="input" aria-label="From">
+                    <span aria-hidden="true">–</span>
+                    <input type="date" id="date-end" class="input" aria-label="To">
+                    <button type="button" id="date-clear" class="btn btn-quiet btn-icon" aria-label="Clear dates" title="Clear dates">×</button>
+                </div>
+            </div>
+            <div class="field">
+                <label for="country-filter">Country</label>
+                <span class="select"><select id="country-filter"><option value="">All countries</option></select></span>
+            </div>
+            <div class="field">
+                <label for="browser-filter">Browser</label>
+                <span class="select"><select id="browser-filter"><option value="">All browsers</option></select></span>
+            </div>
+            <div class="field">
+                <label for="os-filter">Operating system</label>
+                <span class="select"><select id="os-filter"><option value="">All systems</option></select></span>
+            </div>
+            <div class="field">
+                <label for="page-filter">URI</label>
+                <span class="select"><select id="page-filter"><option value="">All URIs</option></select></span>
+            </div>
+            <div class="field">
+                <label for="method-filter">Method</label>
+                <span class="select"><select id="method-filter"><option value="">All methods</option></select></span>
+            </div>
+            <div class="field">
+                <label for="search-filter">Search</label>
+                <input type="search" id="search-filter" class="input" placeholder="/blog/*, 203.0.113.*">
+            </div>
+            <fieldset class="field">
+                <legend>Exclude</legend>
+                <div class="checks">
+                    <label class="check"><input type="checkbox" id="ignore-static" checked> Static files</label>
+                    <label class="check"><input type="checkbox" id="ignore-images" checked> Images</label>
+                    <label class="check"><input type="checkbox" id="ignore-monitors" checked> Monitors</label>
+                    <label class="check"><input type="checkbox" id="ignore-bots" checked> Bots</label>
+                </div>
+            </fieldset>
+        </form>
 
-            <section class="cards">
-                <div class="card">
-                    <span class="card-value" id="total-requests">—</span>
-                    <span class="card-label">Total Requests</span>
-                </div>
-                <div class="card">
-                    <span class="card-value" id="unique-ips">—</span>
-                    <span class="card-label">Unique IPs</span>
-                </div>
-                <div class="card">
-                    <span class="card-value" id="total-bytes">—</span>
-                    <span class="card-label">Transferred</span>
-                </div>
-                <div class="card">
-                    <span class="card-value" id="avg-response">—</span>
-                    <span class="card-label">Avg Response</span>
-                </div>
-            </section>
+        <p id="filter-summary" class="filter-summary"></p>
 
-            <section class="grid-2col">
-                <div class="panel">
-                    <h2>World Map</h2>
-                    <div class="filter-hint" id="hint-map"></div>
-                    <div id="map-container"></div>
-                    <div id="map-tooltip" class="tooltip hidden"></div>
-                </div>
-                <div class="panel">
+        <nav class="tabs" aria-label="Views">
+            <a href="#statistics" data-tab="statistics" aria-current="page">Statistics</a>
+            <a href="#events" data-tab="events">Single events</a>
+        </nav>
+
+        <div id="tab-statistics">
+            <dl class="kpis">
+                <div class="kpi"><dt>Requests</dt><dd id="total-requests">—</dd></div>
+                <div class="kpi"><dt>Unique IPs</dt><dd id="unique-ips">—</dd></div>
+                <div class="kpi"><dt>Transferred</dt><dd id="total-bytes">—</dd></div>
+                <div class="kpi"><dt>Avg. response</dt><dd id="avg-response">—</dd></div>
+            </dl>
+
+            <div class="grid-2">
+                <section class="panel">
+                    <h2>World map</h2>
+                    <div id="map-container" class="map"></div>
+                    <p id="geoip-missing" class="panel-note" hidden>Countries are unknown: CaddyShack runs without the optional GeoIP database (flag <span class="mono">-geodb</span>).</p>
+                </section>
+                <section class="panel">
                     <h2>Countries</h2>
-                    <div class="filter-hint" id="hint-countries"></div>
-                    <table id="country-table" class="data-table">
-                        <thead><tr><th>Country</th><th>Code</th><th>Requests</th><th>%</th></tr></thead>
+                    <table id="country-table" class="table">
+                        <thead><tr><th>Country</th><th>Code</th><th class="num">Requests</th><th class="num">Share</th></tr></thead>
                         <tbody></tbody>
                     </table>
-                </div>
-            </section>
+                </section>
+            </div>
 
-            <section class="grid-2col">
-                <div class="panel">
+            <div class="grid-2">
+                <section class="panel">
                     <h2>Browsers</h2>
-                    <div class="filter-hint" id="hint-browsers"></div>
-                    <div id="browser-chart"></div>
-                </div>
-                <div class="panel">
-                    <h2>Operating Systems</h2>
-                    <div class="filter-hint" id="hint-oses"></div>
-                    <div id="os-chart"></div>
-                </div>
+                    <canvas id="browser-chart" role="img" aria-label="Requests by browser"></canvas>
+                </section>
+                <section class="panel">
+                    <h2>Operating systems</h2>
+                    <canvas id="os-chart" role="img" aria-label="Requests by operating system"></canvas>
+                </section>
+            </div>
+
+            <section class="panel">
+                <h2>Daily traffic</h2>
+                <canvas id="daily-chart" role="img" aria-label="Requests per day"></canvas>
             </section>
 
-            <section class="panel full-width">
-                <h2>Daily Traffic</h2>
-                <div class="filter-hint" id="hint-daily"></div>
-                <canvas id="daily-chart" height="250"></canvas>
-            </section>
-
-            <section class="grid-2col">
-                <div class="panel">
-                    <h2>Status Codes</h2>
-                    <div class="filter-hint" id="hint-status"></div>
-                    <canvas id="status-chart" height="200"></canvas>
-                </div>
-                <div class="panel">
+            <div class="grid-2">
+                <section class="panel">
+                    <h2>Status codes</h2>
+                    <canvas id="status-chart" role="img" aria-label="Requests by status code"></canvas>
+                </section>
+                <section class="panel">
                     <h2>Top URIs</h2>
-                    <div class="filter-hint" id="hint-pages"></div>
-                    <table id="pages-table" class="data-table">
-                        <thead><tr><th>URI</th><th>Requests</th></tr></thead>
+                    <table id="pages-table" class="table">
+                        <thead><tr><th>URI</th><th class="num">Requests</th></tr></thead>
                         <tbody></tbody>
                     </table>
-                </div>
-            </section>
+                </section>
+            </div>
 
-            <section class="panel full-width">
-                <h2>Top Visitors</h2>
-                <div class="filter-hint" id="hint-visitors"></div>
-                <table id="visitors-table" class="data-table">
-                    <thead><tr><th>IP (anonymized)</th><th>Country</th><th>Requests</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </section>
-
-            <section class="panel full-width">
-                <h2>Top External Referrers</h2>
-                <div class="filter-hint" id="hint-referrers"></div>
-                <table id="referrers-table" class="data-table">
-                    <thead><tr><th>Referrer</th><th>Requests</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </section>
+            <div class="grid-2">
+                <section class="panel">
+                    <h2>Top visitors</h2>
+                    <table id="visitors-table" class="table">
+                        <thead><tr><th>IP (anonymized)</th><th>Country</th><th class="num">Requests</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </section>
+                <section class="panel">
+                    <h2>Top external referrers</h2>
+                    <table id="referrers-table" class="table">
+                        <thead><tr><th>Referrer</th><th class="num">Requests</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </section>
+            </div>
         </div>
 
-        <div id="tab-events" class="tab-panel hidden">
-            <div class="filter-hint" id="hint-events"></div>
-            <div class="panel">
-                <div class="events-table-wrap">
-                    <table class="data-table events-table" id="events-table">
+        <div id="tab-events" hidden>
+            <section class="panel">
+                <div class="events-wrap">
+                    <table class="table events" id="events-table">
                         <thead>
                             <tr>
-                                <th>Timestamp</th>
+                                <th>Time (UTC)</th>
                                 <th>Method</th>
                                 <th>Host</th>
                                 <th>URI</th>
-                                <th>Status</th>
-                                <th>Size</th>
-                                <th>Duration</th>
+                                <th class="num">Status</th>
+                                <th class="num">Size</th>
+                                <th class="num">Duration</th>
                                 <th>IP</th>
                                 <th>Country</th>
                                 <th>Browser</th>
@@ -227,25 +194,55 @@
                     </table>
                 </div>
                 <div id="events-sentinel"></div>
-                <div id="events-status"></div>
-            </div>
+                <p id="events-status" class="events-status" aria-live="polite"></p>
+            </section>
         </div>
     </main>
+
+    <div id="tooltip" class="tooltip" hidden></div>
+
+    <dialog id="about" class="dialog" aria-labelledby="about-title">
+        <div class="dialog-head">
+            <img src="/img/caddyshack-logo.png" alt="">
+            <div>
+                <h2 id="about-title">CaddyShack</h2>
+                <p class="mono dialog-meta" id="about-version"></p>
+            </div>
+        </div>
+        <p>Analyzes Caddy access logs on the server they come from: how much traffic, from which countries,
+           with which browsers, for which pages — down to the single request.</p>
+
+        <h3>Made by</h3>
+        <p>Timo Böwing, in his spare time.</p>
+        <ul class="link-list">
+            <li><a href="https://huepattl.de/products/caddyshack.html" target="_blank" rel="noopener noreferrer">CaddyShack on huepattl.de</a> — product page</li>
+            <li><a href="https://github.com/bjblazko/caddyshack" target="_blank" rel="noopener noreferrer">bjblazko/caddyshack on GitHub</a> — source code, releases and issues</li>
+            <li><a href="https://huepattl.de" target="_blank" rel="noopener noreferrer">huepattl.de</a> — more projects</li>
+        </ul>
+
+        <h3>Your data</h3>
+        <p>CaddyShack makes no requests to anyone else: no telemetry, no update check. Uploaded logs stay on
+           this server and are deleted once unused for the configured time (one hour by default).
+           IP addresses are shortened before they reach your browser.</p>
+
+        <h3>License</h3>
+        <p>Apache License 2.0, provided without warranty as far as the law allows.
+           <a href="/licenses.html">Licenses and thanks</a> lists the projects CaddyShack is built on.</p>
+
+        <form method="dialog" class="dialog-actions">
+            <button class="btn btn-secondary">Close</button>
+        </form>
+    </dialog>
 
     <footer class="site-footer">
         <p>
             <span id="geoip-attribution" hidden>IP geolocation by <a href="https://db-ip.com" rel="noopener noreferrer">DB-IP</a> · </span>
             CaddyShack runs on this server only: no telemetry, no external requests.
             Apache License 2.0, provided without warranty as far as the law allows ·
-            <a href="/licenses.txt">Licenses and notices</a>
+            <a href="/licenses.html">Licenses and thanks</a>
         </p>
         <p>Caddy is a registered trademark of Stack Holdings GmbH. CaddyShack is not affiliated with the Caddy project.</p>
     </footer>
-
-    <div id="loading" class="hidden">
-        <div class="spinner"></div>
-        <p>Analyzing log file…</p>
-    </div>
 
     <script src="/vendor/d3.min.js"></script>
     <script src="/vendor/topojson-client.min.js"></script>
