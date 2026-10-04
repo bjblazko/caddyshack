@@ -24,7 +24,7 @@ Country-level resolution via the DB-IP Lite CSV (`internal/geoip`). Only the res
 - Optional: if the CSV is absent, the app runs without country data (logs a warning, does not fail)
 - Country code `"??"` is used for unresolved or IPv6 addresses
 
-## Stateless Processing
+## Processing Model
 
 - Uploaded log files (raw IPs included) are stored in `$TMPDIR/caddyshack` so filters can re-analyze them (ADR-009). They are deleted once unused for `-upload-ttl` (default 1h), on startup, and immediately if the upload fails (ADR-010)
 - No database, no sessions; apart from uploads no state persists between requests
@@ -36,7 +36,7 @@ Country-level resolution via the DB-IP Lite CSV (`internal/geoip`). Only the res
 
 ## Path Traversal Prevention
 
-The `GET /api/analyze-local` endpoint accepts only a bare filename in the `name` query parameter. Path components are rejected to prevent directory traversal.
+`GET /api/analyze` and `GET /api/events` accept only a bare filename in the `name` query parameter, and an upload ID in `file` that must not contain `/`, `\` or `.`. Path separators and `..` are rejected to prevent directory traversal.
 
 ## Recommendations for Operators
 

@@ -116,7 +116,7 @@ example.com {
 }
 ```
 
-See [doc/spec/log-format.md](doc/spec/log-format.md) for the full field specification.
+See [doc/specs/parsing.md](doc/specs/parsing.md) for the full field specification.
 
 ## Architecture
 
@@ -153,7 +153,7 @@ caddyshack/
 │   └── img/                   # Logo
 ├── data/                      # GeoIP CSV (not shipped, download separately)
 ├── testdata/                  # Sample logs and generator script
-└── doc/spec/                  # Project specification
+└── doc/                       # Specs (doc/specs/), arc42 + ADRs (doc/arch/), features, glossary
 ```
 
 ## Technology Stack

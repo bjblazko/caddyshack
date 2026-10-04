@@ -13,22 +13,28 @@ HTTP server log produced by Caddy containing per-request metadata: timestamp, cl
 Log format used by Caddy: one JSON object per line. CaddyShack parses these line-by-line using a streaming scanner.
 
 **Report**
-The JSON object returned by the API after analysis. Contains summary cards, top-N tables, daily traffic data, and chart data for a given host and status filter.
+The aggregated metrics for all entries that pass the active filters: summary cards, top-N tables, daily traffic and chart data. Computed fresh on every request.
 
-**FullReport**
-A wrapper around three `Report` objects: one for all traffic, one for 2xx (success), one for 4xx+ (errors). Enables client-side status filtering without re-analysis.
+**AnalysisResult**
+The response of `/api/upload` and `/api/analyze`: `{ file_id?, hosts, report }`. `hosts` lists the canonical hosts selectable under all other active filters.
 
-**MultiHostReport**
-The root API response structure. Contains a list of hostnames and a `by_host` map (host → FullReport) covering both per-host and aggregate ("All Sites") views.
+**FilterParams**
+The set of filter conditions sent as query parameters (host, date range, status, country, browser, OS, page, method, search, static/image exclusion). All conditions are ANDed and applied before aggregation (ADR-009).
 
 **Stateless**
-Design principle: no database, no sessions, no disk writes. All parsing and aggregation happens in memory within a single HTTP request and is discarded after the response is sent.
+Design principle: no database and no sessions. Analysis results are never stored. The only data kept between requests are uploaded log files, held temporarily on disk until the Upload TTL expires (ADR-009, ADR-010).
 
 **Streaming**
 Design principle: logs are parsed line-by-line with `bufio.Scanner`. Memory usage grows with the number of unique values (IPs, URIs), not the total number of log lines.
 
 **Request-Scoped Analysis**
-All data lives only for the duration of one HTTP request. There is no shared state between requests.
+Every filter change re-reads the log file and recomputes the report within one HTTP request. Parsed entries and counters are discarded once the response is sent.
+
+**Upload ID (`file_id`)**
+Random 32-character hex ID under which an uploaded log file is stored in `$TMPDIR/caddyshack`. Passed as `file=<id>` to `/api/analyze` and `/api/events`.
+
+**Upload TTL**
+Idle time (`-upload-ttl`, default 1h) after which an uploaded log file is deleted. Every analysis of the upload resets the timer; the directory is emptied on startup (ADR-010).
 
 ---
 
@@ -107,7 +113,7 @@ The D3.js map projection that converts geographic coordinates (lat/lon) to SVG p
 Standard HTTP response code. CaddyShack groups them into classes: 2xx (success), 3xx (redirect), 4xx (client error), 5xx (server error).
 
 **Status Filter**
-UI-level segmentation of traffic into three views: *All* (every request), *Success (2xx)*, and *Errors (4xx–5xx)*. Each corresponds to one of the three reports in a `FullReport`.
+Segmentation of traffic into *All* (every request), *Success (2xx)* and *Errors (4xx–5xx)*. Sent as `status=success|error` and applied on the backend before aggregation.
 
 **User-Agent**
 HTTP request header identifying the client software. Parsed by `useragent.go` to extract a browser name and OS name via ordered string matching.
@@ -126,13 +132,22 @@ Maximum upload size enforced server-side via `MaxBytesReader`: 500 MB. Prevents 
 ## Asset Filtering
 
 **Static Assets**
-Non-page requests excluded from the "Top Pages" table. Identified by path prefix (`/css/`, `/js/`, `/img/`, `/fonts/`, `/api`) or file extension (`.css`, `.js`, `.png`, `.jpg`, `.svg`, `.ico`, `.woff`, `.woff2`, `.ttf`).
+Non-page requests excluded from the "Top Pages" table. Identified by path prefix (`/css/`, `/js/`, `/img/`, `/fonts/`, `/api`) or file extension (`.css`, `.js`, `.png`, `.jpg`, `.svg`, `.ico`, `.woff`, `.woff2`, `.ttf`). Not to be confused with the Static Files and Images exclusion filters, which use their own lists.
+
+**Static Files / Images Exclusion**
+Optional filters (`ignore_static=1`, `ignore_images=1`) that remove requests from all statistics and the Single Events view. Static files: JS, CSS, source maps, fonts, `robots.txt`, `sitemap.xml`, and paths under `/css/`, `/js/`, `/fonts/`. Images: PNG, JPG/JPEG, GIF, SVG, WebP, ICO, BMP, AVIF, and paths under `/img/`, `/images/`. The query string is ignored when matching extensions.
+
+**Glob Search**
+Search filter (`search=`) matched case-insensitively against URI, client IP and Referer. `*` matches any number of characters; without `*` the value must match exactly.
 
 **Page Filtering**
-For the success filter: only URIs with status < 400 and non-asset paths count as pages. For the error filter: URIs with status ≥ 400 count as pages regardless of extension.
+Only non-asset URIs count as pages. Without a status filter or with the success filter, only responses with status < 400 count; with the error filter, error responses count as pages too.
 
 **Top N**
-Convention for limiting ranked results. Used throughout: top 15 pages, top 10 browsers/OS, top 10 visitors, top 15 countries.
+Convention for limiting ranked results: top 15 pages and countries, top 10 browsers, OS, visitors and referrers, top 20 HTTP methods. Entries with equal counts are ordered by name.
+
+**Single Events**
+Tab listing individual filtered log entries newest first, paginated via `/api/events` (100 per page, at most 200). IPs are anonymized.
 
 ---
 
@@ -141,17 +156,20 @@ Convention for limiting ranked results. Used throughout: top 15 pages, top 10 br
 **Single-Page Dashboard**
 All UI sections live in one `index.html` file. Sections are hidden until a log file is loaded; there is no client-side routing.
 
+**Canonical Host**
+The form under which requests to one site are grouped: the `Host` header in lower case without the default ports `:443` and `:80` (`huepattl.de:443` → `huepattl.de`). Non-default ports remain part of the host. Used for the host list, the host filter and the Single Events view.
+
 **Host Dropdown**
 UI control to switch between virtual hosts found in a multi-host log. Defaults to "All Sites" (aggregate view).
 
 **Canvas 2D API**
-HTML5 canvas used for rendering bar charts (horizontal and vertical). Chosen for pixel-level control without a charting library dependency.
+HTML5 canvas used for rendering bar charts (horizontal and vertical). Chosen for pixel-level control without a charting library dependency. The browser and OS donut charts use D3 (SVG).
 
 **DPR (Device Pixel Ratio)**
 `window.devicePixelRatio` used to scale canvas rendering for high-DPI (Retina) displays, keeping charts crisp.
 
 **Chart Namespace**
-JavaScript module object (`Charts`) exposing `renderBarChart()` and `renderVerticalBarChart()`. Encapsulates all canvas chart logic.
+JavaScript module object (`Charts`) exposing `renderBarChart()`, `renderVerticalBarChart()` and `renderPieChart()`. Encapsulates all chart logic.
 
 **WorldMap Namespace**
 JavaScript module object (`WorldMap`) exposing `render()`. Encapsulates all D3 map rendering logic.
@@ -174,9 +192,10 @@ The HTTP encoding used for file uploads. The file field name is `logfile`. Parse
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/api/upload` | POST | Upload and analyze a log file (multipart, field: `logfile`) |
+| `/api/upload` | POST | Store and analyze a log file (multipart, field: `logfile`); returns `file_id` |
 | `/api/logs` | GET | List available server-side log files from `/var/log/caddy` |
-| `/api/analyze-local` | GET | Analyze a server-side log file by name (`?name=<filename>`) |
+| `/api/analyze` | GET | Analyze an upload (`file=<id>`) or server-side log (`name=<filename>`) with filters |
+| `/api/events` | GET | Filtered single log entries, paginated (`offset`, `limit`) |
 | `/api/health` | GET | Health check; returns `{"status":"ok"}` |
 
 ---
@@ -215,7 +234,7 @@ Caddy configuration directives (`roll_size`, `roll_keep`, `roll_keep_for`) that 
 Caddy directive specifying which upstream proxy IPs to trust for `X-Forwarded-For` header extraction, determining the correct `client_ip` value.
 
 **Virtual Host / Multi-host**
-A single Caddy instance (and thus a single log file) can serve multiple hostnames. CaddyShack groups log entries by the `host` field for per-host analysis.
+A single Caddy instance (and thus a single log file) can serve multiple hostnames. CaddyShack groups log entries by their Canonical Host for per-host analysis.
 
 ---
 

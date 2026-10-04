@@ -68,11 +68,13 @@ Each Go package in `internal/` has exactly one job and no knowledge of HTTP or J
 
 ---
 
-## Stateless Request Lifecycle
+## Request Lifecycle
 
-Every HTTP request is fully self-contained:
+Every analysis request is self-contained:
 - No global mutable state is written during request handling
-- The only shared state is the GeoIP lookup table (read-only after startup)
+- The only shared in-memory state is the GeoIP lookup table (read-only after startup)
 - All counters and maps created during `analyzer.Analyze` are local to that call and garbage-collected after the response is written
 
-This means CaddyShack can be safely run behind a load balancer with multiple instances without any coordination.
+The one exception is uploads: `POST /api/upload` stores the file in `$TMPDIR/caddyshack` so later filter requests can re-read it (ADR-009). A background sweeper deletes uploads idle for longer than `-upload-ttl` (ADR-010).
+
+Because uploads live on the local disk of one instance, running several instances behind a load balancer requires sticky sessions (or a shared temp directory). Server-side logs (`name=`) work on any instance that can read them.

@@ -28,7 +28,8 @@ graph LR
 | Server-side log list | Browser → CaddyShack | HTTP GET | JSON |
 | Server-side log analysis | Browser → CaddyShack | HTTP GET | JSON |
 | Dashboard delivery | CaddyShack → Browser | HTTP GET | HTML/CSS/JS |
-| Analysis result | CaddyShack → Browser | HTTP JSON | `MultiHostReport` |
+| Analysis result | CaddyShack → Browser | HTTP JSON | `AnalysisResult` |
+| Single events | CaddyShack → Browser | HTTP JSON | `EventsResult` |
 | GeoIP database | Filesystem → CaddyShack | File read at startup | CSV |
 
 ### External Systems

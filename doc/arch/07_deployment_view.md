@@ -64,13 +64,13 @@ docker run -p 8080:8080 \
 
 ## Option C: Same Host as Caddy (Recommended for Server-Side Analysis)
 
-When CaddyShack runs on the same host as Caddy, the `GET /api/logs` and `GET /api/analyze-local` endpoints allow the operator to analyze log files directly without downloading and re-uploading them.
+When CaddyShack runs on the same host as Caddy, the `GET /api/logs` and `GET /api/analyze?name=<file>` endpoints allow the operator to analyze log files directly without downloading and re-uploading them.
 
 ```mermaid
 graph LR
     subgraph server["Server — raw log data never leaves"]
         caddy["Caddy"] -->|"writes"| logfile["/var/log/caddy/access.json"]
-        logfile -->|"reads via\nGET /api/analyze-local"| cs["CaddyShack"]
+        logfile -->|"reads via\nGET /api/analyze?name="| cs["CaddyShack"]
     end
     browser["Operator's browser"] <-->|"HTTP"| cs
 ```

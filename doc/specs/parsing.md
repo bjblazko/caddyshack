@@ -64,6 +64,58 @@ Multiple site blocks may log to the same file; the `request.host` field distingu
 | `server_name` | string | SNI server name |
 | `ech` | bool | Encrypted Client Hello used |
 
+## Example Entry
+
+```json
+{
+  "level": "info",
+  "ts": 1774300000.123456,
+  "logger": "http.log.access.log0",
+  "msg": "handled request",
+  "request": {
+    "remote_ip": "93.184.216.34",
+    "remote_port": "52431",
+    "client_ip": "93.184.216.34",
+    "proto": "HTTP/2.0",
+    "method": "GET",
+    "host": "example.com",
+    "uri": "/blog/hello-world",
+    "headers": {
+      "User-Agent": ["Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ..."],
+      "Accept": ["text/html"]
+    },
+    "tls": {
+      "resumed": false,
+      "version": 772,
+      "cipher_suite": 4865,
+      "proto": "h2",
+      "server_name": "example.com",
+      "ech": false
+    }
+  },
+  "bytes_read": 0,
+  "user_id": "",
+  "duration": 0.00312847,
+  "size": 8421,
+  "status": 200
+}
+```
+
+## Fields Used by CaddyShack
+
+| What | Source field |
+|------|-------------|
+| Timestamp | `ts` |
+| Client IP | `request.client_ip` (fallback: `request.remote_ip`) |
+| Request path | `request.uri` |
+| HTTP method | `request.method` |
+| Status code | `status` |
+| Response size | `size` |
+| Response time | `duration` (seconds → ms via ×1000) |
+| User-Agent | `request.headers["User-Agent"][0]` |
+| Referer | `request.headers["Referer"][0]` |
+| Hostname | `request.host`, normalized to the canonical host (see `analysis.md`) |
+
 ## Package: `internal/logparser`
 
 **`ParseStream(r io.Reader, fn func(LogEntry))`**
