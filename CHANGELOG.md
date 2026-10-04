@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Frontend assets are now embedded in the binary as ADR-002 intended; they were served from a `static/` directory next to the binary, so release binaries (shipped without that directory) showed no UI
 - Pie chart legend swatches and the "World map data not available" message were unstyled because the CSP blocks inline `style` attributes
 - `/api/events` with a negative `offset` crashed the request; it is now treated as 0
 - Ranked lists (top pages, browsers, visitors, countries, …) ordered entries with equal counts randomly, so results could change between identical requests; ties are now ordered by name

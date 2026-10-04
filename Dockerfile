@@ -8,6 +8,5 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o caddyshack .
 FROM alpine:3
 WORKDIR /app
 COPY --from=builder /build/caddyshack .
-COPY static/ ./static/
 EXPOSE 8080
 ENTRYPOINT ["./caddyshack"]

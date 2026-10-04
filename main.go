@@ -2,7 +2,9 @@
 package main
 
 import (
+	"embed"
 	"flag"
+	"io/fs"
 	"log"
 	"net/http"
 	"time"
@@ -10,6 +12,11 @@ import (
 	"github.com/bjblazko/caddyshack/internal/geoip"
 	"github.com/bjblazko/caddyshack/internal/handler"
 )
+
+// staticFiles holds the frontend, embedded so the binary runs on its own (ADR-002).
+//
+//go:embed static
+var staticFiles embed.FS
 
 const csp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 
@@ -38,7 +45,11 @@ func main() {
 	mux.HandleFunc("GET /api/analyze", handler.Analyze)
 	mux.HandleFunc("GET /api/events", handler.Events)
 	mux.HandleFunc("GET /api/health", handler.Health)
-	mux.Handle("/", http.FileServer(http.Dir("static")))
+	static, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		log.Fatal(err)
+	}
+	mux.Handle("/", http.FileServer(http.FS(static)))
 
 	log.Printf("CaddyShack listening on %s", *addr)
 	log.Fatal(http.ListenAndServe(*addr, securityHeaders(mux)))
