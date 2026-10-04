@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-04
+
 ### Security
 
 - Build with Go 1.27.1: the downloadable release binaries up to v0.4.0 were built with Go 1.25.0 (no longer supported) and contained 45 known standard-library vulnerabilities, among them in `net/http`, `net/url` (query parsing) and `crypto/tls`; `govulncheck` now reports none. Container images were not affected to the same degree: they used the latest Go 1.25 patch release. Release builds use the `toolchain` version in `go.mod`, building from source needs Go 1.26+
@@ -127,7 +129,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - D3.js and TopoJSON served locally for offline use
 - Single-binary deployment with configurable listen address and GeoIP path
 
-[Unreleased]: https://github.com/bjblazko/caddyshack/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/bjblazko/caddyshack/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/bjblazko/caddyshack/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/bjblazko/caddyshack/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/bjblazko/caddyshack/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/bjblazko/caddyshack/compare/v0.1.1...v0.2.0
