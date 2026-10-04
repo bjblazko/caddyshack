@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"net"
+	"net/url"
 	"strings"
 )
 
@@ -18,4 +19,14 @@ func canonicalHost(host string) string {
 		return "[" + name + "]" // IPv6 literal
 	}
 	return name
+}
+
+// referrerHost returns the canonical host of a Referer URL, or "" if the value
+// is not a URL with a host.
+func referrerHost(referer string) string {
+	u, err := url.Parse(referer)
+	if err != nil {
+		return ""
+	}
+	return canonicalHost(u.Host)
 }

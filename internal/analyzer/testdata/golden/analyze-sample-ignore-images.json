@@ -256,11 +256,6 @@
         "count": 40
       }
     ],
-    "top_referrers": [
-      {
-        "name": "https://example.com/",
-        "count": 423
-      }
-    ]
+    "top_referrers": []
   }
 }

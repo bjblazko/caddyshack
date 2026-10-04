@@ -120,7 +120,8 @@ except the host filter, so the list reflects what can usefully be selected.
   "daily_traffic": [{ "date": "2026-03-29", "count": 8 }],
   "top_visitors":  [{ "ip": "93.184.216.0", "count": 2, "country": "US", "country_name": "United States" }],
   "countries":     [{ "code": "US", "name": "United States", "count": 4 }],
-  "methods":       [{ "name": "GET", "count": 6 }]
+  "methods":       [{ "name": "GET", "count": 6 }],
+  "top_referrers": [{ "name": "https://www.example.org/", "count": 3 }]
 }
 ```
 
@@ -140,3 +141,4 @@ except the host filter, so the list reflects what can usefully be selected.
 | `top_visitors` | VisitorInfo[] | 10 | Anonymized IPs |
 | `countries` | CountryCount[] | 15 | Sorted descending |
 | `methods` | NameCount[] | 20 | Sorted descending |
+| `top_referrers` | NameCount[] | 10 | External referrers only (host not a site in the log) |

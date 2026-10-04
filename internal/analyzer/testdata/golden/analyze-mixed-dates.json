@@ -124,11 +124,6 @@
         "count": 1
       }
     ],
-    "top_referrers": [
-      {
-        "name": "https://a.example/blog/",
-        "count": 1
-      }
-    ]
+    "top_referrers": []
   }
 }

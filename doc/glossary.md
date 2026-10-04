@@ -146,6 +146,9 @@ Only non-asset URIs count as pages. Without a status filter or with the success 
 **Top N**
 Convention for limiting ranked results: top 15 pages and countries, top 10 browsers, OS, visitors and referrers, top 20 HTTP methods. Entries with equal counts are ordered by name.
 
+**External Referrer**
+A Referer whose host is not one of the sites in the loaded log. Only these appear in Top External Referrers; navigation within or between the operator's own sites is left out. Own sites are derived from the log, never configured.
+
 **Single Events**
 Tab listing individual filtered log entries newest first, paginated via `/api/events` (100 per page, at most 200). IPs are anonymized.
 

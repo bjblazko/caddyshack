@@ -208,11 +208,6 @@
         "count": 8
       }
     ],
-    "top_referrers": [
-      {
-        "name": "https://example.com/",
-        "count": 200
-      }
-    ]
+    "top_referrers": []
   }
 }

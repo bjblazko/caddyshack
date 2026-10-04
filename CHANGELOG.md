@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Top Referrers shows external referrers only (renamed "Top External Referrers"): referrers pointing to any site found in the loaded log are internal navigation and left out; sites are derived from the log, nothing is configured
+- Empty tables show "No data for the current filters." instead of a bare header
 - `/api/events` caps `limit` at 200 instead of resetting values above 200 to 100, matching the documented behaviour
 - An expired upload answers `404` with a message asking to upload the file again
 

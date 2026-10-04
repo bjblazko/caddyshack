@@ -134,10 +134,6 @@
     ],
     "top_referrers": [
       {
-        "name": "https://a.example/blog/",
-        "count": 1
-      },
-      {
         "name": "https://search.example/?q=x",
         "count": 1
       }

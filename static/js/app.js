@@ -275,7 +275,7 @@
         ]);
         renderTable('referrers-table', data.top_referrers || [], r => [
             truncate(r.name, 60, r.name), (r.count || 0).toLocaleString()
-        ]);
+        ], 'No external referrers for the current filters.');
 
         populateDimensionDropdowns(data);
         updateFilterHints();
@@ -564,9 +564,18 @@
 
     // ── Utilities ─────────────────────────────────────────────────────────────
 
-    function renderTable(tableId, items, rowFn) {
-        const tbody = document.getElementById(tableId).querySelector('tbody');
+    function renderTable(tableId, items, rowFn, emptyText = 'No data for the current filters.') {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector('tbody');
         tbody.innerHTML = '';
+        if (items.length === 0) {
+            const td = document.createElement('td');
+            td.className = 'table-empty';
+            td.colSpan = table.querySelectorAll('thead th').length;
+            td.textContent = emptyText;
+            tbody.appendChild(document.createElement('tr')).appendChild(td);
+            return;
+        }
         for (const item of items) {
             const tr = document.createElement('tr');
             for (const val of rowFn(item)) {

@@ -64,9 +64,13 @@ type AnalysisResult struct {
 func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 	params = params.normalized()
 	hostSeen := make(map[string]bool)
+	siteHosts := make(map[string]bool) // every host in the log, for internal referrers
 	report := newReportBuilder(params.Status == "error")
 
 	parseEvents(r, func(e logEvent) {
+		if e.Request.Host != "" {
+			siteHosts[e.Request.Host] = true
+		}
 		if !params.matchesExceptHost(e) {
 			return
 		}
@@ -82,7 +86,7 @@ func Analyze(r io.Reader, params FilterParams) *AnalysisResult {
 
 	return &AnalysisResult{
 		Hosts:  sortedKeys(hostSeen),
-		Report: report.build(),
+		Report: report.build(siteHosts),
 	}
 }
 

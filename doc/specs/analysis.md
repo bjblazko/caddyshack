@@ -56,6 +56,17 @@ For each log entry:
 | `daily` | YYYY-MM-DD | |
 | `countryCounts` | ISO 3166-1 alpha-2 code | |
 | `methods` | HTTP method string | Empty methods excluded |
+| `referrers` | Referer URL | Empty values excluded; internal referrers removed when the report is built (see below) |
+
+## External Referrers
+
+`top_referrers` lists only external referrers. While parsing, every canonical
+host in the file is recorded as one of the operator's **own sites** —
+independent of the active filters, so switching the host filter does not turn
+a sibling site into an "external" source. When the report is built, a referrer
+whose URL host (canonicalized the same way) is an own site is dropped before
+the top-10 cut. Values that are not URLs with a host count as external.
+Single Events and the search filter still see every Referer value.
 
 ## Report Structure
 
@@ -81,6 +92,7 @@ graph TD
 | `top_visitors` | VisitorInfo[] | 10 | Sorted descending by count |
 | `countries` | CountryCount[] | 15 | Sorted descending by count |
 | `methods` | NameCount[] | 20 | Sorted descending by count |
+| `top_referrers` | NameCount[] | 10 | External referrers only, sorted descending by count |
 
 ### Nested Types
 

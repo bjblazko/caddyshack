@@ -15,13 +15,22 @@ Single-page application (`index.html`). All sections hidden until a log file is 
 ### Sections (top to bottom)
 
 1. **Header** — logo, title, subtitle, drag-and-drop upload zone
-2. **Filter bar** — host dropdown, Success/Error/All toggle, date range inputs, Country/Browser/OS/Page/Method dropdowns
+2. **Filter bar** — host dropdown, Success/Error/All toggle, date range inputs, Country/Browser/OS/Page/Method dropdowns, search input, static/image exclusion checkboxes
 3. **Summary Cards** (4-column desktop / 2-column mobile) — total requests, unique IPs, data transferred, avg response time
 4. **World Map + Countries** (2-column) — D3 bubble map left, country table right
 5. **Browsers + Operating Systems** (2-column) — D3.js donut charts with green-palette slices and a percentage legend
 6. **Daily Traffic** (full-width) — vertical bar chart on `<canvas>`
 7. **Status Codes + Top Pages** (2-column) — bar chart and table
 8. **Top Visitors** (full-width) — table with anonymized IPs, country, count
+9. **Top External Referrers** (full-width) — table of referrers from outside the sites in the log
+
+A second tab, **Single Events**, lists the filtered log entries newest first with infinite scrolling.
+
+### Empty Tables
+
+A table without rows shows one muted line (`--text-light`) spanning all
+columns: "No data for the current filters." The referrers table says "No
+external referrers for the current filters."
 
 ### Responsive Breakpoint
 

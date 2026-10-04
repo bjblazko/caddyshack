@@ -60,7 +60,9 @@ func (b *reportBuilder) add(e logEvent) {
 	}
 }
 
-func (b *reportBuilder) build() *Report {
+// build assembles the Report. Referrers whose host is one of siteHosts are
+// internal navigation and left out of TopReferrers.
+func (b *reportBuilder) build(siteHosts map[string]bool) *Report {
 	var avgMs float64
 	if b.totalRequests > 0 {
 		avgMs = (b.totalDuration / float64(b.totalRequests)) * 1000
@@ -78,6 +80,16 @@ func (b *reportBuilder) build() *Report {
 		TopVisitors:      topVisitors(b.ips, 10),
 		Countries:        topCountries(b.countries, 15),
 		Methods:          topN(b.methods, 20),
-		TopReferrers:     topN(b.referrers, 10),
+		TopReferrers:     topN(externalReferrers(b.referrers, siteHosts), 10),
 	}
+}
+
+func externalReferrers(referrers map[string]int, siteHosts map[string]bool) map[string]int {
+	external := make(map[string]int, len(referrers))
+	for ref, count := range referrers {
+		if !siteHosts[referrerHost(ref)] {
+			external[ref] = count
+		}
+	}
+	return external
 }
