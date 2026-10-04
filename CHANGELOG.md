@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-04
+
 ### Added
 
 - Pre-anonymized logs: when the `User-Agent` header was stripped but `request.browser` / `request.os` are present, these names are used for the Browsers and OS charts and the client kind
@@ -116,7 +118,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - D3.js and TopoJSON served locally for offline use
 - Single-binary deployment with configurable listen address and GeoIP path
 
-[Unreleased]: https://github.com/bjblazko/caddyshack/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/bjblazko/caddyshack/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/bjblazko/caddyshack/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/bjblazko/caddyshack/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/bjblazko/caddyshack/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/bjblazko/caddyshack/compare/v0.1.0...v0.1.1
